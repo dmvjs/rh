@@ -49,6 +49,7 @@ export async function renderHeader(el) {
             <a href="/government/">govt</a>
             <a href="/cameras/">cameras</a>
             <a href="/property/">homes</a>
+            <a href="/water/">water</a>
             ${user
               ? `<a href="/community/">posts</a>
                  <a href="/map/">map</a>

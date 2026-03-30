@@ -13,6 +13,7 @@ import governmentRoutes  from './routes/government.js'
 import propertyRoutes    from './routes/property.js'
 import alertRoutes       from './routes/alerts.js'
 import adsRoutes         from './routes/ads.js'
+import waterRoutes        from './routes/water.js'
 
 const app = new Hono()
 
@@ -34,6 +35,7 @@ app.route('/api/government',  governmentRoutes)
 app.route('/api/property',    propertyRoutes)
 app.route('/api/alerts',      alertRoutes)
 app.route('/api/ads',         adsRoutes)
+app.route('/api/water',       waterRoutes)
 
 app.get('/api/health', (c) => c.json({ ok: true }))
 

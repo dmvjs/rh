@@ -76,6 +76,61 @@ function permitCard(p) {
   `
 }
 
+function fmtDelta(assessed, prior) {
+  if (!assessed || !prior) return ''
+  const delta = assessed - prior
+  const pct   = ((delta / prior) * 100).toFixed(1)
+  const sign  = delta >= 0 ? '+' : ''
+  const color = delta >= 0 ? '#3a7d44' : '#c0392b'
+  return `<span style="color:${color};font-size:.8rem;font-weight:600;">${sign}${fmtPrice(delta)} (${sign}${pct}%)</span>`
+}
+
+function assessCard(a) {
+  const delta = fmtDelta(a.assessed, a.prior)
+  const exemp = a.exemption ? `<span class="prop-badge" style="background:#f5e6c8;color:#7a5a1a;">${a.exemption}</span>` : ''
+  return `
+    <div class="prop-card">
+      <div class="prop-card-top">
+        <div>
+          <p class="prop-address">${a.address || `PIN ${a.pin}`}</p>
+          <div class="prop-card-row">
+            <span class="prop-price">${fmtPrice(a.assessed)}</span>
+            ${exemp}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          ${delta}
+          ${a.prior ? `<p style="font-size:.75rem;color:var(--muted);margin:2px 0 0;">prior ${fmtPrice(a.prior)}</p>` : ''}
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function zoningCard(z) {
+  const link = z.url ? `<a href="${z.url}" class="prop-btn" target="_blank" rel="noopener">PLUS ↗</a>` : ''
+  const desc = z.description ? `<p style="margin:4px 0 0;font-size:.8rem;color:var(--muted);line-height:1.4;">${z.description}</p>` : ''
+  return `
+    <div class="prop-card">
+      <div class="prop-card-top">
+        <div>
+          <p class="prop-address">${z.address || `PIN ${z.pin}`}</p>
+          <div class="prop-card-row">
+            <span class="prop-permit-type">${z.type ?? ''}</span>
+            <span class="prop-permit-status">${z.status ?? ''}</span>
+          </div>
+          ${z.applicant ? `<p style="margin:2px 0 0;font-size:.8rem;color:var(--muted);">Applicant: ${z.applicant}</p>` : ''}
+          ${desc}
+        </div>
+        <div class="prop-card-actions">${link}</div>
+      </div>
+      <div class="prop-card-bottom">
+        ${z.date ? `<span class="prop-meta-date">Submitted ${fmtDate(z.date)}</span>` : ''}
+      </div>
+    </div>
+  `
+}
+
 function section(title, subtitle, cards) {
   if (!cards.length) return ''
   return `
@@ -117,16 +172,21 @@ async function init() {
     return
   }
 
-  const { sales = [], permits = [] } = data
+  const { sales = [], permits = [], assessments = [], zoningCases = [] } = data
+
+  // Sort assessments by year-over-year change descending
+  const sortedAssess = [...assessments].sort((a, b) => ((b.assessed - b.prior) || 0) - ((a.assessed - a.prior) || 0))
 
   el.innerHTML = `
     <div class="pol-intro">
       <p class="pol-intro-label">Mason District · Fairfax County</p>
       <h1 class="pol-title">Property Activity</h1>
-      <p class="pol-subtitle">Recent sales and permits on neighborhood streets. Data from Fairfax County.</p>
+      <p class="pol-subtitle">Sales, permits, assessments, and zoning cases on neighborhood streets. Data from Fairfax County.</p>
     </div>
     ${section('Recent Sales', `${sales.length} sales on record`, sales.map(saleCard))}
-    ${section('Building Permits', `${permits.length} active permits · last 120 days`, permits.map(permitCard))}
+    ${section('2026 Assessments', `${assessments.length} parcels · sorted by year-over-year change`, sortedAssess.map(assessCard))}
+    ${section('Zoning Cases', `${zoningCases.length} cases · last 3 years`, zoningCases.map(zoningCard))}
+    ${section('Building Permits', `${permits.length} permits · last 12 months`, permits.map(permitCard))}
   `
 }
 

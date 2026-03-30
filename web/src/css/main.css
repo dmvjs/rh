@@ -723,6 +723,23 @@ footer a { color: var(--muted); text-decoration: underline; }
   border-radius: 4px;
 }
 
+.water-status {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+.water-status-good { background: #eaf4ec; color: #2d6a35; border-color: #b6deba; }
+.water-status-warn { background: #fef6e4; color: #8a5a00; border-color: #f5d98a; }
+.water-status-bad  { background: #fdecea; color: #b91c1c; border-color: #f5b8b8; }
+
 .prop-meta-date {
   font-size: .78rem;
   color: var(--muted);

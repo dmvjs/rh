@@ -2,9 +2,11 @@ import { Hono } from 'hono'
 
 const router = new Hono()
 
-const SALES_URL   = 'https://www.fairfaxcounty.gov/mercator/rest/services/GIS/ParcelPlusSales/MapServer/0/query'
-const PERMITS_URL = 'https://www.fairfaxcounty.gov/mercator/rest/services/LDS/DevelopmentTracker/FeatureServer/4/query'
-const ADDRESS_URL = 'https://www.fairfaxcounty.gov/mercator/rest/services/GIS/AddressesRoadwaysQuery/MapServer/0/query'
+const SALES_URL    = 'https://www.fairfaxcounty.gov/mercator/rest/services/GIS/ParcelPlusSales/MapServer/0/query'
+const PERMITS_URL  = 'https://www.fairfaxcounty.gov/mercator/rest/services/LDS/DevelopmentTracker/FeatureServer/4/query'
+const ADDRESS_URL  = 'https://www.fairfaxcounty.gov/mercator/rest/services/GIS/AddressesRoadwaysQuery/MapServer/0/query'
+const ASSESS_URL   = 'https://services1.arcgis.com/ioennV6PpG5Xodq0/ArcGIS/rest/services/OpenData_A6/FeatureServer/2/query'
+const ZONING_URL   = 'https://www.fairfaxcounty.gov/gisint1/rest/services/PLUS/ZoningMap/MapServer/8/query'
 
 // Ridgelea Hills / Mantua subdivision streets — exact STREET_NAME values from address layer
 const STREET_NAMES = [
@@ -169,9 +171,77 @@ async function fetchPermits(pins) {
 }
 
 
+async function fetchAssessments(pins) {
+  if (!pins.length) return []
+  const CHUNK = 50
+  const all   = []
+  for (let i = 0; i < pins.length; i += CHUNK) {
+    const chunk = pins.slice(i, i + CHUNK)
+    const list  = chunk.map(p => `'${p.replace(/'/g, "''")}'`).join(',')
+    const params = new URLSearchParams({
+      where:             `PARID IN (${list})`,
+      outFields:         'PARID,APRTOT,PRITOT,FLAG4_DESC',
+      resultRecordCount: '500',
+      returnGeometry:    'false',
+      f:                 'json',
+    })
+    const res = await fetch(`${ASSESS_URL}?${params}`).catch(() => null)
+    if (!res?.ok) continue
+    const data = await res.json()
+    for (const f of (data.features ?? [])) {
+      const a = f.attributes
+      if (!a.APRTOT) continue
+      all.push({
+        pin:       a.PARID?.trim(),
+        assessed:  a.APRTOT,
+        prior:     a.PRITOT,
+        exemption: a.FLAG4_DESC && a.FLAG4_DESC !== 'No Exemption' ? a.FLAG4_DESC : null,
+      })
+    }
+  }
+  return all
+}
+
+async function fetchZoningCases(pins) {
+  if (!pins.length) return []
+  const CHUNK = 50
+  const all   = []
+  const cutoff = new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  for (let i = 0; i < pins.length; i += CHUNK) {
+    const chunk = pins.slice(i, i + CHUNK)
+    // ZoningMap layer 8 uses parcel geometry — query by PARCEL_NUM which maps to PIN
+    const list  = chunk.map(p => `'${p.replace(/'/g, "''")}'`).join(',')
+    const params = new URLSearchParams({
+      where:             `PARCEL_NUM IN (${list}) AND SUBMITTED_DATE >= DATE '${cutoff}'`,
+      outFields:         'RECORDID,APPTYPEALIAS,APPLICANT,RECORD_STATUS,WORK_DESCRIPTION,SUBMITTED_DATE,LINK_URL,PARCEL_NUM',
+      orderByFields:     'SUBMITTED_DATE DESC',
+      resultRecordCount: '200',
+      returnGeometry:    'false',
+      f:                 'json',
+    })
+    const res = await fetch(`${ZONING_URL}?${params}`).catch(() => null)
+    if (!res?.ok) continue
+    const data = await res.json()
+    for (const f of (data.features ?? [])) {
+      const a = f.attributes
+      all.push({
+        id:          a.RECORDID,
+        type:        a.APPTYPEALIAS,
+        applicant:   a.APPLICANT ?? null,
+        status:      a.RECORD_STATUS,
+        description: a.WORK_DESCRIPTION ?? null,
+        date:        a.SUBMITTED_DATE ? new Date(a.SUBMITTED_DATE).toISOString().slice(0, 10) : null,
+        url:         a.LINK_URL ?? null,
+        pin:         a.PARCEL_NUM?.trim() ?? null,
+      })
+    }
+  }
+  return all.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+}
+
 router.get('/', async (c) => {
   const kv = c.env.CACHE
-  const CACHE_KEY = 'property:v12'
+  const CACHE_KEY = 'property:v13'
   const TTL = 60 * 60
 
   if (kv) {
@@ -181,9 +251,11 @@ router.get('/', async (c) => {
 
   const { pins } = await fetchNeighborhoodPins().catch(() => ({ pins: [] }))
 
-  const [sales, permits] = await Promise.all([
+  const [sales, permits, assessments, zoningCases] = await Promise.all([
     fetchSalesByPins(pins).catch(() => []),
     fetchPermits(pins).catch(() => []),
+    fetchAssessments(pins).catch(() => []),
+    fetchZoningCases(pins).catch(() => []),
   ])
 
   // Enrich sales with addresses from the address layer (already have them from PIN lookup)
@@ -215,7 +287,16 @@ router.get('/', async (c) => {
     s.address = pinAddrs[s.pin] ?? null
   }
 
-  const result = { sales, permits, fetchedAt: new Date().toISOString() }
+  // Enrich assessments with addresses
+  for (const a of assessments) {
+    a.address = pinAddrs[a.pin] ?? null
+  }
+  // Enrich zoning cases with addresses
+  for (const z of zoningCases) {
+    z.address = pinAddrs[z.pin] ?? null
+  }
+
+  const result = { sales, permits, assessments, zoningCases, fetchedAt: new Date().toISOString() }
   if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
   return c.json(result)
 })
