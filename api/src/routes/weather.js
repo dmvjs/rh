@@ -213,13 +213,13 @@ async function fetchAqi() {
 
 async function fetchAfd() {
   const listRes = await fetch('https://api.weather.gov/products/types/AFD/locations/LWX', {
-    headers: { 'User-Agent': 'ridgeleahills/1.0 (kirk@ridgeleahills.com)' },
+    headers: { 'User-Agent': 'ridgeleahills/1.0 (admin@ridgeleahills.com)' },
   })
   const list = await listRes.json()
   const latest = list['@graph']?.[0]
   if (!latest) return null
   const prodRes = await fetch(latest['@id'], {
-    headers: { 'User-Agent': 'ridgeleahills/1.0 (kirk@ridgeleahills.com)' },
+    headers: { 'User-Agent': 'ridgeleahills/1.0 (admin@ridgeleahills.com)' },
   })
   const prod = await prodRes.json()
   return {
@@ -231,7 +231,7 @@ async function fetchAfd() {
 async function fetchNws() {
   try {
     const ptRes = await fetch(`https://api.weather.gov/points/${LAT},${LON}`, {
-      headers: { 'User-Agent': 'ridgeleahills/1.0 (kirk@ridgeleahills.com)' },
+      headers: { 'User-Agent': 'ridgeleahills/1.0 (admin@ridgeleahills.com)' },
     })
     const pt = await ptRes.json()
     const forecastUrl = pt.properties?.forecast

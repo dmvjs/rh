@@ -11,6 +11,8 @@ const parse = (row) => ({ ...row, images: JSON.parse(row.images) })
 
 router.get('/', async (c) => {
   const { category, limit = '50', offset = '0' } = c.req.query()
+  const safeLimit  = Math.min(Math.max(Number(limit)  || 0, 0), 100)
+  const safeOffset = Math.max(Number(offset) || 0, 0)
   const now = Math.floor(Date.now() / 1000)
 
   if (category && !CATEGORIES.has(category)) return c.json({ listings: [] })
@@ -21,13 +23,13 @@ router.get('/', async (c) => {
          FROM listings l JOIN users u ON u.id = l.user_id
          WHERE l.active = 1 AND l.expires_at > ? AND l.category = ?
          ORDER BY l.created_at DESC LIMIT ? OFFSET ?`
-      ).bind(now, category, Number(limit), Number(offset)).all()
+      ).bind(now, category, safeLimit, safeOffset).all()
     : await c.env.DB.prepare(
         `SELECT l.id, l.category, l.title, l.price, l.images, l.created_at, u.name AS author
          FROM listings l JOIN users u ON u.id = l.user_id
          WHERE l.active = 1 AND l.expires_at > ?
          ORDER BY l.created_at DESC LIMIT ? OFFSET ?`
-      ).bind(now, Number(limit), Number(offset)).all()
+      ).bind(now, safeLimit, safeOffset).all()
 
   return c.json({ listings: results.map(parse) })
 })

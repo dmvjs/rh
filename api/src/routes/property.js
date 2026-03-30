@@ -168,10 +168,6 @@ async function fetchPermits(pins) {
   return all.sort((a, b) => (b.issuedDate ?? '').localeCompare(a.issuedDate ?? ''))
 }
 
-router.get('/debug', async (c) => {
-  const { pins, blockAddrs } = await fetchNeighborhoodPins().catch(() => ({ pins: [], blockAddrs: {} }))
-  return c.json({ pinCount: pins.length, samplePins: pins.slice(0, 10), blockAddrs })
-})
 
 router.get('/', async (c) => {
   const kv = c.env.CACHE

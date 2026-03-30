@@ -23,7 +23,8 @@ async function hashPassword(password) {
 const hash = await hashPassword(ADMIN_PASSWORD)
 const email = ADMIN_EMAIL.toLowerCase()
 
-const sql = `INSERT OR REPLACE INTO users (name, email, password_hash, address, approved, role) VALUES ('${ADMIN_NAME}', '${email}', '${hash}', '${ADMIN_ADDRESS}', 1, 'admin');`
+const esc = (s) => s.replace(/'/g, "''")
+const sql = `INSERT OR REPLACE INTO users (name, email, password_hash, address, approved, role) VALUES ('${esc(ADMIN_NAME)}', '${esc(email)}', '${esc(hash)}', '${esc(ADMIN_ADDRESS)}', 1, 'admin');`
 
 console.log('\nFor PRODUCTION (remote):\n')
 console.log(`npx wrangler d1 execute rh --remote --command "${sql}"\n`)

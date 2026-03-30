@@ -48,7 +48,11 @@ async function init() {
 
       window.location.href = `/listing/?id=${id}`
     } catch (err) {
-      msgEl.innerHTML = `<div class="msg msg-error">${err.message}</div>`
+      msgEl.textContent = ''
+      const div = document.createElement('div')
+      div.className = 'msg msg-error'
+      div.textContent = err.message
+      msgEl.appendChild(div)
       btn.disabled = false
       btn.textContent = 'Post listing'
     }
