@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Join — Ridgelea Hills</title>
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <div class="container">
+      <div class="auth-wrap">
+        <h1 class="auth-title">Request access</h1>
+        <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">
+          This site is for Ridgelea Hills residents. After you register, a neighbor will verify you live here before your account is activated.
+        </p>
+        <div id="msg"></div>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="name">Full name</label>
+            <input type="text" id="name" name="name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+          </div>
+          <div class="form-group">
+            <label for="address">Your address in Ridgelea Hills</label>
+            <input type="text" id="address" name="address" required
+              autocomplete="off" placeholder="e.g. 3915 Laro Ct">
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone (optional)</label>
+            <input type="tel" id="phone" name="phone" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label for="note">Anything that helps verify you live here (optional)</label>
+            <input type="text" id="note" name="note" placeholder="e.g. near the corner of X, moved in 2021…">
+          </div>
+          <button type="submit" class="btn">Request access</button>
+        </form>
+        <p class="auth-footer">Already approved? <a href="/login/">Sign in</a></p>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/register.js"></script>
+</body>
+</html>

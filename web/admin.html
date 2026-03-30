@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Ridglea Hills</title>
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main style="visibility:hidden">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Admin</h1>
+      </div>
+
+      <p class="section-title" style="margin-bottom: 12px;">Pending approval</p>
+      <div id="pending" style="margin-bottom: 40px; overflow-x: auto;">
+        <div class="skeleton" style="width:60%;"></div>
+        <div class="skeleton" style="width:80%;"></div>
+        <div class="skeleton" style="width:50%;"></div>
+      </div>
+
+      <p class="section-title" style="margin-bottom: 12px;">All residents</p>
+      <div id="all-users" style="overflow-x: auto; margin-bottom: 40px;">
+        <div class="skeleton" style="width:70%;"></div>
+        <div class="skeleton" style="width:85%;"></div>
+        <div class="skeleton" style="width:55%;"></div>
+      </div>
+
+      <p class="section-title" style="margin-bottom: 12px;">Trusted emails (auto-approve)</p>
+      <form id="trusted-form" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <input type="email" id="trusted-email" placeholder="email@example.com" required style="flex:1;min-width:200px;">
+        <input type="text" id="trusted-address" placeholder="Address (optional)" style="flex:1;min-width:180px;">
+        <button type="submit" class="btn btn-sm">Add</button>
+      </form>
+      <div id="trusted-list" style="overflow-x: auto;">
+        <div class="skeleton" style="width:50%;"></div>
+        <div class="skeleton" style="width:65%;"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/admin.js"></script>
+</body>
+</html>

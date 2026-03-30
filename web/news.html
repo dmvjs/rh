@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local News — Ridgelea Hills</title>
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Local News</h1>
+      </div>
+
+      <div id="neighborhood-section" style="display:none;max-width:620px;margin-bottom:32px;">
+        <h2 style="font-size:1rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">In the Neighborhood</h2>
+        <div id="neighborhood-list"></div>
+      </div>
+
+      <div id="news-grid" style="max-width:620px;"></div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/news.js"></script>
+</body>
+</html>

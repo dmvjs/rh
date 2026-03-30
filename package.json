@@ -1,0 +1,9 @@
+{
+  "name": "rh",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["api", "web"],
+  "scripts": {
+    "deploy": "./deploy.sh"
+  }
+}

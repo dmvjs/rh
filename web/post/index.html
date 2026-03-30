@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Post — Ridgelea Hills</title>
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <div class="container">
+      <div class="auth-wrap" style="max-width: 560px;">
+        <h1 class="auth-title">Post a listing</h1>
+        <div id="msg"></div>
+        <form id="post-form">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="for-sale">For Sale</option>
+              <option value="free">Free</option>
+              <option value="services">Services</option>
+              <option value="lost-found">Lost &amp; Found</option>
+              <option value="events">Events</option>
+              <option value="recommendations">Recommendations</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required maxlength="120" placeholder="Brief description">
+          </div>
+          <div class="form-group">
+            <label for="body">Details</label>
+            <textarea id="body" name="body" required placeholder="Describe what you're posting…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="price">Price (leave blank if free or N/A)</label>
+            <input type="number" id="price" name="price" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label for="contact_email">Contact email (optional)</label>
+            <input type="email" id="contact_email" name="contact_email">
+          </div>
+          <div class="form-group">
+            <label for="contact_phone">Contact phone (optional)</label>
+            <input type="tel" id="contact_phone" name="contact_phone">
+          </div>
+          <div class="form-group">
+            <label for="images">Photos (optional, up to 5)</label>
+            <input type="file" id="images" name="images" accept="image/jpeg,image/png,image/webp" multiple>
+            <div id="thumbs" class="upload-list"></div>
+          </div>
+          <button type="submit" class="btn">Post listing</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/post.js"></script>
+</body>
+</html>

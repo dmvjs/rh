@@ -1,0 +1,12 @@
+.DS_Store
+.idea/
+node_modules/
+web/node_modules/
+api/node_modules/
+web/dist/
+*.local
+.env
+.dev.vars
+.wrangler/
+data/*.db*
+api/prod-backup.sql
