@@ -84,8 +84,41 @@ function fmtIncidentDate(dateStr, timeStr) {
   return `${month} ${d} · ${h12}:${String(min).padStart(2,'0')} ${ampm}`
 }
 
+function hoaMeetingNotice() {
+  const now = new Date()
+  const MONTHS = [1, 4, 7, 10] // Feb, May, Aug, Nov (0-indexed)
+
+  function thirdThursday(year, month) {
+    const d = new Date(year, month, 1)
+    const offset = (4 - d.getDay() + 7) % 7
+    return new Date(year, month, 1 + offset + 14)
+  }
+
+  for (let y = now.getFullYear(); y <= now.getFullYear() + 1; y++) {
+    for (const m of MONTHS) {
+      const day  = thirdThursday(y, m)
+      const end  = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 20, 30)
+      const from = new Date(day.getTime() - 7 * 24 * 60 * 60 * 1000)
+      if (now >= from && now < end) {
+        const MO = ['January','February','March','April','May','June','July','August','September','October','November','December']
+        const isToday = day.toDateString() === now.toDateString()
+        return { label: `${MO[day.getMonth()]} ${day.getDate()}`, isToday }
+      }
+    }
+  }
+  return null
+}
+
 function renderNeighborhood(local, police) {
-  if (!local.length && !police.length) return ''
+  const hoa = hoaMeetingNotice()
+  if (!local.length && !police.length && !hoa) return ''
+
+  const hoaHtml = hoa ? `
+    <p class="nbhd-section-label">HOA Board Meeting</p>
+    <div class="nbhd-incident">
+      <p class="nbhd-incident-type">${hoa.isToday ? 'Tonight · 7:00 – 8:30 PM' : `${hoa.label} · 7:00 – 8:30 PM`}</p>
+    </div>
+  ` : ''
 
   const policeHtml = police.length ? `
     <p class="nbhd-section-label">Fairfax County Police</p>
@@ -105,7 +138,7 @@ function renderNeighborhood(local, police) {
     </a>
   `).join('')
 
-  return policeHtml + localHtml
+  return hoaHtml + policeHtml + localHtml
 }
 
 async function init() {
@@ -142,11 +175,24 @@ async function init() {
   renderAd(document.getElementById('ad-mobile-banner'), '320x50')
   renderAd(document.getElementById('ad-mobile-rect'),   '300x250')
 
-  const [{ articles }, { local = [], police = [] }, wx, alertsRes] = await Promise.all([
-    api.get('/api/news').catch(() => ({ articles: [] })),
-    api.get('/api/news/local').catch(() => ({ local: [], police: [] })),
-    api.get('/api/weather').catch(() => null),
-    api.get('/api/alerts').catch(() => null),
+  // Kick off all fetches simultaneously but render news as soon as it arrives
+  const newsPromise  = api.get('/api/news').catch(() => ({ articles: [] }))
+  const localPromise = api.get('/api/news/local').catch(() => ({ local: [], police: [] }))
+  const wxPromise    = api.get('/api/weather').catch(() => null)
+  const alertsPromise = api.get('/api/alerts').catch(() => null)
+
+  // Render main feed immediately when news resolves
+  const { articles } = await newsPromise
+  if (!articles.length) {
+    grid.innerHTML = '<p style="color:var(--muted);padding:32px 0;">No stories right now.</p>'
+  } else {
+    const [first, ...rest] = articles
+    grid.innerHTML = renderHero(first) + rest.map(renderCard).join('')
+  }
+
+  // Fill in sidebar and weather as the remaining requests finish
+  const [{ local = [], police = [] }, wx, alertsRes] = await Promise.all([
+    localPromise, wxPromise, alertsPromise,
   ])
 
   // Weather widget
@@ -191,19 +237,11 @@ async function init() {
   // Neighborhood sidebar
   const nbhdSection = document.getElementById('neighborhood-section')
   const nbhdList    = document.getElementById('neighborhood-list')
-  if ((local.length || police.length) && nbhdSection && nbhdList) {
+  const nbhdContent = renderNeighborhood(local, police)
+  if (nbhdContent && nbhdSection && nbhdList) {
     nbhdSection.style.display = 'block'
-    nbhdList.innerHTML = renderNeighborhood(local, police)
+    nbhdList.innerHTML = nbhdContent
   }
-
-  // Main feed
-  if (!articles.length) {
-    grid.innerHTML = '<p style="color:var(--muted);padding:32px 0;">No stories right now.</p>'
-    return
-  }
-
-  const [first, ...rest] = articles
-  grid.innerHTML = renderHero(first) + rest.map(renderCard).join('')
 }
 
 init()

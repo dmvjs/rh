@@ -34,7 +34,7 @@ export async function renderHeader(el) {
 
   el.innerHTML = `
     ${!user ? `<div class="beta-bar">
-      <div class="container">Have a ridgeleahills.org email? <a href="/register/" style="color:inherit;text-decoration:underline;">Sign up</a> — members get no ads.</div>
+      <div class="container">Have a ridgeleahills.org email? <a href="/register/" style="color:inherit;text-decoration:underline;">Sign up</a></div>
     </div>` : ''}
     <header>
       <div class="container">
@@ -48,17 +48,24 @@ export async function renderHeader(el) {
             <a href="/restaurants/">dining</a>
             <a href="/government/">govt</a>
             <a href="/cameras/">cams</a>
+            <a href="/gas/">gas</a>
             <a href="/property/">homes</a>
             <a href="/water/">water</a>
             <a href="/parks/">parks</a>
             <a href="/wildlife/">wildlife</a>
+            <a href="/about/">about</a>
 
 
             ${user
-              ? `<a href="/community/">posts</a>
-<a href="/post/">+ post</a>
-                 <a href="/account/">my posts</a>
-                 ${user.role === 'admin' || user.role === 'moderator' ? '<a href="/admin/">admin</a>' : ''}
+              ? `<div class="nav-dropdown" id="nav-community">
+                   <button class="nav-dropdown-trigger">community ▾</button>
+                   <div class="nav-dropdown-menu">
+                     <a href="/community/">posts</a>
+                     <a href="/post/">+ post</a>
+                     <a href="/account/">my posts</a>
+                     ${user.role === 'admin' || user.role === 'moderator' ? '<a href="/admin/">admin</a>' : ''}
+                   </div>
+                 </div>
                  <a href="#" id="nav-logout">sign out</a>`
               : `<a href="/login/">sign in</a>
                  <a href="/register/" class="btn btn-sm">join</a>`
@@ -79,6 +86,13 @@ export async function renderHeader(el) {
   el.querySelector('#nav-toggle')?.addEventListener('click', () => {
     el.querySelector('#main-nav').classList.toggle('nav-open')
   })
+
+  const dropdown = el.querySelector('#nav-community')
+  dropdown?.querySelector('.nav-dropdown-trigger')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    dropdown.classList.toggle('open')
+  })
+  document.addEventListener('click', () => dropdown?.classList.remove('open'), { once: false })
 
   return user
 }

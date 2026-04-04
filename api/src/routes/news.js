@@ -32,26 +32,11 @@ const LOCAL_FEEDS = [
 // Distinctive names used to filter RSS articles (must be specific enough to avoid false positives)
 const LOCAL_RE = /ridgelea|mantua|moss brooke|millbank|sandalwood|laro|bentwood|glade hill|sandy ridge|southlea/i
 
-// All Mantua streets — used only for police CSV (already scoped to Fairfax County)
-const POLICE_RE = /acosta|alba place|albion|amberley|autumn leaf|barbara lane|barkley|bentwood|blairmore|bosworth|briarbush|briary|brookings|cedar lane|chantal|chapel hill|chichester|christopher st|colchester brook|colesbury|convento|copeland pond|cordova place|coronado|courtley|cranleigh|crestview|delburne|denise lane|dorado|duvall|eakin park|edenvale|glade hill|glen court|glenbrook|goodview|grosvenor|(?<!new )guinea|guysborough|hamilton drive|hillside place|horner|karen drive|kilmarnock|kirkwood|kittery|landon court|laro|latrobe|laurel leaf|leghorn|lemington|lido place|lothbury|lynn regis|lynnhurst|mantua|mathy|maywood|midland road|mill springs|millbank|morningside|moss brooke|nutley|okla|olley|overbrook|parkside|pembridge|pentland|persimmon|petros|pixie|ponce place|prado place|prince william drive|readsborough|ridgelea|rocky mount|sandalwood|sandy ridge|santayana|skyview|southlea|southwick|st marks|st pauls|stonehurst|stoneleigh|swinburne|taylor drive|tovito|white clover|wynford/i
-
-// Block-restricted streets: only match within these address number ranges
-const BLOCK_RULES = [
-  { re: /PINELAND/i,     min: 3800, max: 3921 },
-  { re: /LEROY/i,        min: 8700, max: 8799 },
-  { re: /LITTLE RIVER/i, min: 3921, max: 3921 },
-  { re: /LITTLE RIVER/i, min: 8600, max: 9400 },
-  { re: /PROSPERITY/i,   min: 3000, max: 3900 },
-  { re: /ARLINGTON BLVD|ARLINGTON BOULEVARD/i, min: 8500, max: 9400 },
-  { re: /PICKETT/i,      min: 3000, max: 3900 },
-]
+// Ridgelea Hills streets only — used to filter police incidents to the subdivision
+const POLICE_RE = /ridgelea|southlea|sandy ridge|sandalwood|laro|bentwood/i
 
 function isLocalAddress(addressRaw) {
-  if (POLICE_RE.test(addressRaw)) return true
-  const m = /^(\d+)\s+/.exec(addressRaw.trim())
-  if (!m) return false
-  const num = parseInt(m[1])
-  return BLOCK_RULES.some(r => r.re.test(addressRaw) && num >= r.min && num <= r.max)
+  return POLICE_RE.test(addressRaw)
 }
 
 // General news must mention this region to pass — keep specific to avoid metro noise
@@ -64,6 +49,17 @@ const BLOCKED_DOMAINS = new Set([
   'legacy.com', 'tributes.com', 'dignitymemorial.com',
   'wjla.com',
 ])
+
+// Community-interest stories get a 12-hour boost in sort order — surfaces rec centers, parks,
+// events, nature, schools ahead of equally-old crime or process stories
+const COMMUNITY_RE = /\b(park|rec center|recreation|pool|garden|trail|bloom|flower|festival|fair|school|library|volunteer|award|renovati|communit|neighbor|wildlife|nature|art|music|event|open(s|ing)?|spring|summer|planting|concert|historic|heritage)\b/i
+const COMMUNITY_BOOST_MS = 12 * 60 * 60 * 1000
+
+function sortScore(a) {
+  const pub = new Date(a.publishedAt).getTime()
+  const boost = COMMUNITY_RE.test(`${a.title ?? ''} ${a.snippet ?? ''}`) ? COMMUNITY_BOOST_MS : 0
+  return pub + boost
+}
 
 // Rough English-only check — skip if title has too many accented/non-Latin characters
 function looksEnglish(text) {
@@ -128,7 +124,7 @@ function parseXml(xml) {
     let domain = null
     try { domain = new URL(link).hostname.replace(/^www\./, '') } catch {}
 
-    const skipRe = /\b(murder(ed|s|ing)?|shooting|bomb(ed|ing|s)?|terror(ist|ism)?|death row|massacre|execut(ed|ion)|hostage|riot(s|ing)?|gunman|gunfire|arson|overdose|suicide|birth defect)\b/i
+    const skipRe = /\b(murder(ed|s|ing)?|shooting|bomb(ed|ing|s)?|terror(ist|ism)?|death row|massacre|execut(ed|ion)|hostage|riot(s|ing)?|gunman|gunfire|arson|overdose|suicide|birth defect|sex crimes?|sexual assault|sex offender|predators?|child porn|molest(ed|ing|er)?|naked man|indecent exposure|sexual abuse)\b/i
     const checkText = `${title ?? ''} ${snippet ?? ''}`
     const skip = /daily debrief|morning notes|news recap|obituar|\bglance\b|scoreboard|standings|box score|\bw l t\b/i.test(title ?? '')
       || skipRe.test(checkText)
@@ -145,7 +141,7 @@ function fetchFeed(url) {
 
 router.get('/', async (c) => {
   const kv = c.env.CACHE
-  const CACHE_KEY = 'news:v3'
+  const CACHE_KEY = 'news:v4'
   const TTL = 60 * 20
 
   if (kv) {
@@ -170,7 +166,7 @@ router.get('/', async (c) => {
       ...a,
       local: LOCAL_RE.test(`${a.title ?? ''} ${a.snippet ?? ''}`),
     }))
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    .sort((a, b) => sortScore(b) - sortScore(a))
 
   // Local stories always float to the top
   const localItems    = all.filter(a => a.local)
@@ -224,7 +220,7 @@ function parsePoliceRow(line) {
 }
 
 async function fetchPolice(kv) {
-  const CACHE_KEY = 'police:report'
+  const CACHE_KEY = 'police:v2'
   const TTL = 60 * 60 // 1 hour
 
   if (kv) {
@@ -291,7 +287,7 @@ router.get('/local', async (c) => {
       const text = `${a.title ?? ''} ${a.snippet ?? ''}`
       return LOCAL_RE.test(text)
     })
-    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    .sort((a, b) => sortScore(b) - sortScore(a))
     .filter(a => {
       if (seen.has(a.url)) return false
       seen.add(a.url)

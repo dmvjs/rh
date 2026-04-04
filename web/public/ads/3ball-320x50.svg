@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="50" viewBox="0 0 320 50">
+  <rect width="320" height="50" fill="#f7f7f5"/>
+  <line x1="0" y1="0" x2="320" y2="0" stroke="#e2e2de" stroke-width="1"/>
+  <line x1="0" y1="49" x2="320" y2="49" stroke="#e2e2de" stroke-width="1"/>
+
+  <clipPath id="t"><rect width="210" height="50"/></clipPath>
+  <g clip-path="url(#t)">
+    <text x="12" y="19" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9" font-weight="700" fill="#989b9d" letter-spacing="0.12em">3BALL RACKS</text>
+    <text x="12" y="36" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#1a1a18">Handcrafted billiard racks.</text>
+  </g>
+
+  <rect x="220" y="12" width="88" height="26" rx="4" fill="#1a1a18"/>
+  <text x="264" y="29" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">Shop now →</text>
+
+  <text x="308" y="47" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="8" fill="#b0b0a8" text-anchor="end">sponsored</text>
+</svg>

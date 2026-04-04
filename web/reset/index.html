@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Reset password — Ridgelea Hills</title>
+  <link rel="stylesheet" href="/src/css/main.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main>
+    <div class="container">
+      <div class="auth-wrap">
+        <h1 class="auth-title">Choose a new password</h1>
+        <div id="msg"></div>
+        <form id="reset-form">
+          <div class="form-group">
+            <label for="password">New password</label>
+            <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+          </div>
+          <button type="submit" class="btn">Set password</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/reset.js"></script>
+</body>
+</html>

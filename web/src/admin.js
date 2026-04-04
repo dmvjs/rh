@@ -113,6 +113,10 @@ async function loadTrusted() {
   const { trusted } = await api.get('/api/admin/trusted-emails')
   const el = document.getElementById('trusted-list')
 
+  const uniqueAddresses = new Set(trusted.map(t => t.address).filter(Boolean)).size
+  document.getElementById('trusted-title').textContent =
+    `Trusted emails (auto-approve) · ${trusted.length} emails · ${uniqueAddresses} addresses`
+
   if (!trusted.length) {
     el.innerHTML = '<p style="color:var(--muted)">None yet.</p>'
     return
