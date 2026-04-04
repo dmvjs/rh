@@ -12,17 +12,21 @@
 
   <main>
     <div class="container">
-      <div id="ad-leaderboard" style="display:none;margin:16px 0 0;"></div>
+      <div id="ad-leaderboard" style="display:none;margin:16px 0 0;" class="ad-leaderboard"></div>
+      <div id="ad-mobile-banner" style="display:none;margin:16px 0 0;"></div>
       <div class="news-layout">
-        <div id="news-grid" style="margin-top:24px;"></div>
-        <aside>
+        <div>
+          <a id="weather-widget" href="/weather/" class="wx-widget wx-widget-inline"><span class="skeleton" style="display:block;height:24px;flex:1;border-radius:4px;"></span></a>
+          <div id="news-grid"></div>
+        </div>
+        <aside style="padding-top:16px;">
           <div id="alerts-section" style="display:none;"></div>
-          <a id="weather-widget" href="/weather/" class="wx-widget wx-widget-sidebar"><span class="skeleton" style="display:block;height:24px;width:80%;border-radius:4px;"></span></a>
           <div id="neighborhood-section" style="display:none;">
-            <h2 style="font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:24px 0 12px;">In the Neighborhood</h2>
+            <h2 style="font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px;">In the Neighborhood</h2>
             <div id="neighborhood-list"></div>
           </div>
           <div id="ad-skyscraper" style="display:none;margin:16px 0;"></div>
+          <div id="ad-mobile-rect" style="display:none;margin:16px 0;"></div>
         </aside>
       </div>
     </div>

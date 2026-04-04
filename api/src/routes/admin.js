@@ -1,11 +1,12 @@
 import { Hono } from 'hono'
 import { requireModerator, requireAdmin } from '../middleware/auth.js'
+import { hashEmail } from '../crypto.js'
 
 const router = new Hono()
 
 router.get('/users', requireModerator, async (c) => {
   const { results } = await c.env.DB.prepare(
-    `SELECT id, name, email, address, phone, note, approved, role, created_at
+    `SELECT id, name, substr(email_hash, 1, 8) as email_prefix, address, note, approved, email_verified, role, created_at
      FROM users ORDER BY approved ASC, created_at DESC`
   ).all()
   return c.json({ users: results })
@@ -74,39 +75,24 @@ router.delete('/listings/:id', requireModerator, async (c) => {
 
 router.get('/trusted-emails', requireAdmin, async (c) => {
   const { results } = await c.env.DB.prepare(
-    'SELECT id, email, address FROM trusted_emails ORDER BY address ASC, email ASC'
+    'SELECT id, address, substr(email_hash, 1, 8) as hash_prefix FROM trusted_emails ORDER BY address ASC'
   ).all()
   return c.json({ trusted: results })
 })
 
 router.post('/trusted-emails', requireAdmin, async (c) => {
   const { email, address } = await c.req.json().catch(() => ({}))
-  if (!email) return c.json({ error: 'email is required' }, 400)
-  const street = address?.trim() || null
+  if (!email || !address) return c.json({ error: 'email and address are required' }, 400)
+  const email_hash = await hashEmail(email)
   try {
-    await c.env.DB.prepare('INSERT INTO trusted_emails (email, address) VALUES (?, ?)')
-      .bind(email.toLowerCase().trim(), street).run()
+    await c.env.DB.prepare('INSERT INTO trusted_emails (email_hash, address) VALUES (?, ?)')
+      .bind(email_hash, address.trim()).run()
   } catch (err) {
     if (err.message?.includes('UNIQUE')) return c.json({ error: 'Email already in list' }, 409)
     throw err
   }
-  if (street) c.executionCtx.waitUntil(geocodeTrusted(street, email.toLowerCase().trim(), c.env.DB))
   return c.json({ ok: true })
 })
-
-async function geocodeTrusted(address, email, db) {
-  try {
-    const q   = encodeURIComponent(`${address}, Falls Church, VA 22042, USA`)
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'ridgeleahills/1.0' },
-    })
-    const data = await res.json()
-    if (data[0]) {
-      await db.prepare('UPDATE trusted_emails SET lat = ?, lng = ? WHERE email = ?')
-        .bind(parseFloat(data[0].lat), parseFloat(data[0].lon), email).run()
-    }
-  } catch {}
-}
 
 router.delete('/trusted-emails/:id', requireAdmin, async (c) => {
   const { meta } = await c.env.DB.prepare('DELETE FROM trusted_emails WHERE id = ?')

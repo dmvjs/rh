@@ -16,9 +16,6 @@ function establishmentCard(e) {
   const permit  = e.permitUrl
     ? `<a href="${escHtml(e.permitUrl)}" class="prop-btn" target="_blank" rel="noopener" style="font-size:.75rem;">Inspection ↗</a>`
     : ''
-  const website = e.website
-    ? `<a href="${escHtml(e.website)}" class="prop-btn" target="_blank" rel="noopener" style="font-size:.75rem;">Website ↗</a>`
-    : ''
 
   return `
     <div class="prop-card" style="padding:10px 14px;">
@@ -30,7 +27,6 @@ function establishmentCard(e) {
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
           ${permit}
-          ${website}
         </div>
       </div>
     </div>
@@ -63,37 +59,55 @@ async function init() {
   }
 
   const { establishments = [], totalPermits = 0 } = data
-  const withPermit = establishments.filter(e => e.permitUrl).length
-
-  // Group by amenity type
-  const byType = {}
-  for (const e of establishments) {
-    const k = e.amenity ?? 'other'
-    if (!byType[k]) byType[k] = []
-    byType[k].push(e)
-  }
-
+  const useful = establishments.filter(e => e.permitUrl)
+  const withPermit = useful.filter(e => e.permitUrl).length
   const order = ['restaurant', 'fast_food', 'cafe', 'bar', 'food_court']
-  const sections = [...order, ...Object.keys(byType).filter(k => !order.includes(k))]
-    .filter(k => byType[k]?.length)
-    .map(k => `
-      <div class="prop-section">
-        <div class="prop-section-header">
-          <p class="prop-section-title">${amenityLabel(k)}s</p>
-          <p class="prop-section-sub">${byType[k].length} locations</p>
+
+  function renderList(list) {
+    if (!list.length) return '<p style="color:var(--muted);padding:12px 0;">No results.</p>'
+    const byType = {}
+    for (const e of list) {
+      const k = e.amenity ?? 'other'
+      if (!byType[k]) byType[k] = []
+      byType[k].push(e)
+    }
+    return [...order, ...Object.keys(byType).filter(k => !order.includes(k))]
+      .filter(k => byType[k]?.length)
+      .map(k => `
+        <div class="prop-section">
+          <div class="prop-section-header">
+            <p class="prop-section-title">${amenityLabel(k)}s</p>
+            <p class="prop-section-sub">${byType[k].length} locations</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">${byType[k].map(establishmentCard).join('')}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">${byType[k].map(establishmentCard).join('')}</div>
-      </div>
-    `).join('')
+      `).join('')
+  }
 
   el.innerHTML = `
     <div class="pol-intro">
       <p class="pol-intro-label">Annandale · Falls Church · Bailey's Crossroads</p>
       <h1 class="pol-title">Food Establishments</h1>
-      <p class="pol-subtitle">${establishments.length} places · ${withPermit} with Fairfax County inspection records linked · ${totalPermits} total active food permits in area.</p>
+      <p class="pol-subtitle">${useful.length} places · ${withPermit} with Fairfax County inspection records linked · ${totalPermits} total active food permits in area.</p>
     </div>
-    ${sections || '<p style="color:var(--muted)">No establishments found.</p>'}
+    <input id="food-search" type="search" placeholder="Search by name, cuisine, address…" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:.9rem;border:1px solid var(--border);border-radius:6px;margin-bottom:16px;background:var(--bg);color:var(--text);">
+    <div id="food-list"></div>
   `
+
+  const listEl = document.getElementById('food-list')
+  listEl.innerHTML = renderList(useful)
+
+  document.getElementById('food-search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim()
+    const filtered = q
+      ? useful.filter(x =>
+          (x.name ?? '').toLowerCase().includes(q) ||
+          (x.cuisine ?? '').toLowerCase().includes(q) ||
+          (x.address ?? '').toLowerCase().includes(q) ||
+          (x.city ?? '').toLowerCase().includes(q))
+      : useful
+    listEl.innerHTML = renderList(filtered)
+  })
 }
 
 init()

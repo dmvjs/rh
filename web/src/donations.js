@@ -59,7 +59,7 @@ async function init() {
   const el = document.getElementById('donations-page')
   el.innerHTML = `
     <div class="pol-intro">
-      <p class="pol-intro-label">Zip codes 22003 · 22041 · 22042 · 22044 · 22046</p>
+      <p class="pol-intro-label">Zip code 22031 · Ridglea Hills</p>
       <h1 class="pol-title">Political Donations</h1>
       <p class="pol-subtitle">Federal campaign contributions from area residents, via FEC public records. 2022–2024 election cycles.</p>
     </div>
@@ -77,20 +77,39 @@ async function init() {
   }
 
   const { donations = [] } = data
-  const total = donations.reduce((s, d) => s + (d.amount || 0), 0)
+  const total  = donations.reduce((s, d) => s + (d.amount || 0), 0)
   const unique = new Set(donations.map(d => d.name)).size
+
+  function renderList(list) {
+    if (!list.length) return '<p style="color:var(--muted);padding:12px 0;">No results.</p>'
+    return `<div style="display:flex;flex-direction:column;gap:8px;">${list.map(donationRow).join('')}</div>`
+  }
 
   el.innerHTML = `
     <div class="pol-intro">
-      <p class="pol-intro-label">Zip codes 22003 · 22041 · 22042 · 22044 · 22046</p>
+      <p class="pol-intro-label">Zip code 22031 · Ridglea Hills</p>
       <h1 class="pol-title">Political Donations</h1>
       <p class="pol-subtitle">${donations.length.toLocaleString()} contributions from ${unique.toLocaleString()} donors totaling ${fmtMoney(total)}. FEC public records, 2022–2024.</p>
     </div>
-    ${donations.length === 0
-      ? '<p style="color:var(--muted)">No donations found.</p>'
-      : `<div style="display:flex;flex-direction:column;gap:8px;">${donations.map(donationRow).join('')}</div>`
-    }
+    <input id="don-search" type="search" placeholder="Search by name, employer, committee, candidate…" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:.9rem;border:1px solid var(--border);border-radius:6px;margin-bottom:16px;background:var(--bg);color:var(--text);">
+    <div id="don-list"></div>
   `
+
+  const listEl = document.getElementById('don-list')
+  listEl.innerHTML = renderList(donations)
+
+  document.getElementById('don-search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim()
+    const filtered = q
+      ? donations.filter(d =>
+          (d.name ?? '').toLowerCase().includes(q) ||
+          (d.employer ?? '').toLowerCase().includes(q) ||
+          (d.occupation ?? '').toLowerCase().includes(q) ||
+          (d.committee ?? '').toLowerCase().includes(q) ||
+          (d.candidate ?? '').toLowerCase().includes(q))
+      : donations
+    listEl.innerHTML = renderList(filtered)
+  })
 }
 
 init()

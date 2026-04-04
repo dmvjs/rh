@@ -59,6 +59,15 @@ function cardinalHeading(deg) {
 }
 
 router.get('/', async (c) => {
+  const kv = c.env.CACHE
+  const CACHE_KEY = 'flights:v1'
+  const TTL = 90 // 90 seconds — OpenSky throttles Cloudflare IPs, keep cache warm
+
+  if (kv) {
+    const cached = await kv.get(CACHE_KEY)
+    if (cached) return c.json(JSON.parse(cached))
+  }
+
   const params = new URLSearchParams({ lamin: LAMIN, lomin: LOMIN, lamax: LAMAX, lomax: LOMAX })
   const res = await fetch(`${OPENSKY_URL}?${params}`, {
     headers: { 'User-Agent': 'ridgeleahills/1.0 (admin@ridgeleahills.com)' },
@@ -106,7 +115,9 @@ router.get('/', async (c) => {
   .filter(a => a.lat != null)
   .sort((a, b) => (a.distMi ?? 999) - (b.distMi ?? 999))
 
-  return c.json({ aircraft, fetchedAt: new Date().toISOString() })
+  const result = { aircraft, fetchedAt: new Date().toISOString() }
+  if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
+  return c.json(result)
 })
 
 export default router

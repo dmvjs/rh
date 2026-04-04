@@ -12,7 +12,10 @@ echo "→ deploying api..."
 echo "→ building web..."
 (cd "$ROOT/web" && npm run build)
 
-echo "→ opening dist/ for upload..."
-open "$ROOT/web/dist"
+echo "→ uploading to S3..."
+aws s3 sync "$ROOT/web/dist/" s3://ridgeleahills.com --delete
 
-echo "✓ done — drag dist/ contents to S3"
+echo "→ invalidating CloudFront..."
+aws cloudfront create-invalidation --distribution-id EYPFNA3VEPPWI --paths '/*'
+
+echo "✓ done"

@@ -28,7 +28,7 @@ router.get('/admin', requireAdmin, async (c) => {
 router.post('/admin', requireAdmin, async (c) => {
   const { name, size, image_url, click_url } = await c.req.json().catch(() => ({}))
   if (!name || !size || !image_url || !click_url) return c.json({ error: 'Missing fields' }, 400)
-  if (!['970x66', '160x600'].includes(size)) return c.json({ error: 'Invalid size' }, 400)
+  if (!['970x66', '160x600', '320x50', '300x250'].includes(size)) return c.json({ error: 'Invalid size' }, 400)
   const { meta } = await c.env.DB.prepare(
     `INSERT INTO ads (name, size, image_url, click_url) VALUES (?, ?, ?, ?)`
   ).bind(name, size, image_url, click_url).run()

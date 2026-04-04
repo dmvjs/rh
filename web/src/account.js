@@ -32,7 +32,10 @@ async function load() {
       <span class="listing-time">${fmtDate(l.created_at)}</span>
       <a href="/listing/?id=${l.id}" class="listing-title">${escHtml(l.title)}</a>
       <span class="listing-cat">${LABELS[l.category] ?? l.category}</span>
-      <button class="btn btn-sm btn-danger delete-btn" style="margin-left:8px">Remove</button>
+      <div style="display:flex;gap:6px;margin-left:8px;">
+        <a href="/post/?edit=${l.id}" class="btn btn-sm">Edit</a>
+        <button class="btn btn-sm btn-danger delete-btn">Remove</button>
+      </div>
     </div>
   `).join('')
 
@@ -53,6 +56,36 @@ async function init() {
   ])
   await requireAuth()
   await load()
+
+  const modal        = document.getElementById('delete-modal')
+  const input        = document.getElementById('delete-confirm-input')
+  const confirmBtn   = document.getElementById('delete-modal-confirm')
+
+  document.getElementById('delete-account-btn').addEventListener('click', () => {
+    input.value = ''
+    confirmBtn.disabled = true
+    modal.style.display = 'flex'
+    input.focus()
+  })
+
+  input.addEventListener('input', () => {
+    confirmBtn.disabled = input.value.trim().toLowerCase() !== 'delete'
+  })
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !confirmBtn.disabled) confirmBtn.click()
+  })
+
+  document.getElementById('delete-modal-cancel').addEventListener('click', () => {
+    modal.style.display = 'none'
+  })
+
+  confirmBtn.addEventListener('click', async () => {
+    confirmBtn.disabled = true
+    await api.delete('/api/auth/me')
+    localStorage.removeItem('token')
+    window.location.href = '/'
+  })
 }
 
 init()

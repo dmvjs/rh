@@ -173,9 +173,26 @@ async function init() {
   }
 
   const { sales = [], permits = [], assessments = [], zoningCases = [] } = data
-
-  // Sort assessments by year-over-year change descending
   const sortedAssess = [...assessments].sort((a, b) => ((b.assessed - b.prior) || 0) - ((a.assessed - a.prior) || 0))
+
+  function matchAddr(obj, q) {
+    return (obj.address ?? '').toLowerCase().includes(q) || (obj.pin ?? '').toLowerCase().includes(q)
+  }
+
+  function renderSections(q) {
+    const fSales   = q ? sales.filter(s => matchAddr(s, q)) : sales
+    const fAssess  = q ? sortedAssess.filter(a => matchAddr(a, q)) : sortedAssess
+    const fZoning  = q ? zoningCases.filter(z => matchAddr(z, q) || (z.applicant ?? '').toLowerCase().includes(q) || (z.description ?? '').toLowerCase().includes(q)) : zoningCases
+    const fPermits = q ? permits.filter(p => matchAddr(p, q) || (p.type ?? '').toLowerCase().includes(q)) : permits
+    const total = fSales.length + fAssess.length + fZoning.length + fPermits.length
+    if (q && !total) return '<p style="color:var(--muted);padding:12px 0;">No results.</p>'
+    return `
+      ${section('Recent Sales', `${fSales.length} sales on record`, fSales.map(saleCard))}
+      ${section('2026 Assessments', `${fAssess.length} parcels · sorted by year-over-year change`, fAssess.map(assessCard))}
+      ${section('Zoning Cases', `${fZoning.length} cases · last 3 years`, fZoning.map(zoningCard))}
+      ${section('Building Permits', `${fPermits.length} permits · last 12 months`, fPermits.map(permitCard))}
+    `
+  }
 
   el.innerHTML = `
     <div class="pol-intro">
@@ -183,11 +200,16 @@ async function init() {
       <h1 class="pol-title">Property Activity</h1>
       <p class="pol-subtitle">Sales, permits, assessments, and zoning cases on neighborhood streets. Data from Fairfax County.</p>
     </div>
-    ${section('Recent Sales', `${sales.length} sales on record`, sales.map(saleCard))}
-    ${section('2026 Assessments', `${assessments.length} parcels · sorted by year-over-year change`, sortedAssess.map(assessCard))}
-    ${section('Zoning Cases', `${zoningCases.length} cases · last 3 years`, zoningCases.map(zoningCard))}
-    ${section('Building Permits', `${permits.length} permits · last 12 months`, permits.map(permitCard))}
+    <input id="prop-search" type="search" placeholder="Search by address, applicant, permit type…" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:.9rem;border:1px solid var(--border);border-radius:6px;margin-bottom:16px;background:var(--bg);color:var(--text);">
+    <div id="prop-list"></div>
   `
+
+  const listEl = document.getElementById('prop-list')
+  listEl.innerHTML = renderSections('')
+
+  document.getElementById('prop-search').addEventListener('input', e => {
+    listEl.innerHTML = renderSections(e.target.value.toLowerCase().trim())
+  })
 }
 
 init()

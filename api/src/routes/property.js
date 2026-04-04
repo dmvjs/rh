@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { authenticate } from '../middleware/auth.js'
 
 const router = new Hono()
 
@@ -26,31 +27,8 @@ const STREET_NAMES = [
   'SWINBURNE', 'TAYLOR DR', 'TOVITO', 'WHITE CLOVER', 'WYNFORD',
 ]
 
-// Block-restricted streets — only match within address number ranges
-const BLOCK_RULES = [
-  { re: /PINELAND/i,     min: 3800, max: 3921 },
-  { re: /LEROY/i,        min: 8700, max: 8799 },
-  { re: /LITTLE RIVER/i, min: 3921, max: 3921 },
-  { re: /LITTLE RIVER/i, min: 8600, max: 9400 },
-  { re: /PROSPERITY/i,   min: 3000, max: 3900 },
-  { re: /ARLINGTON BLVD|ARLINGTON BOULEVARD/i, min: 8500, max: 9400 },
-  { re: /PICKETT/i,      min: 3000, max: 3900 },
-]
-
-function passesBlockRule(addr) {
-  const m = /^(\d+)\s+/.exec(addr.trim())
-  if (!m) return false
-  const num = parseInt(m[1])
-  return BLOCK_RULES.some(r => r.re.test(addr) && num >= r.min && num <= r.max)
-}
-
 const STREET_IN   = STREET_NAMES.map(s => `'${s}'`).join(',')
 const STREET_WHERE = `STREET_NAME IN (${STREET_IN})`
-
-// Block-rule streets — fetched with IN, validated by address number client-side
-const BLOCK_NAMES  = ['PINELAND', 'LEROY', 'LITTLE RIVER TPKE', 'PROSPERITY AVE', 'ARLINGTON BLVD', 'PICKETT RD']
-const BLOCK_IN     = BLOCK_NAMES.map(s => `'${s}'`).join(',')
-const BLOCK_WHERE  = `STREET_NAME IN (${BLOCK_IN})`
 
 // Permit types to skip
 const BORING = new Set([
@@ -61,7 +39,7 @@ const BORING = new Set([
 
 // Step 1: get all neighborhood PINs from address layer by street name
 async function fetchNeighborhoodPins() {
-  const where = `SUPERVISOR_DISTRICT = 'MASON' AND ((${STREET_WHERE}) OR (${BLOCK_WHERE}))`
+  const where = `SUPERVISOR_DISTRICT = 'MASON' AND (${STREET_WHERE})`
   const params = new URLSearchParams({
     where,
     outFields:      'PARCEL_PIN,ADDRESS_1',
@@ -74,25 +52,11 @@ async function fetchNeighborhoodPins() {
   const data = await res.json()
 
   const pins = []
-  const blockAddrs = {} // PIN -> ADDRESS_1 for block-rule streets
-
   for (const f of (data.features ?? [])) {
-    const a = f.attributes
-    const pin  = a.PARCEL_PIN?.trim()
-    const addr = a.ADDRESS_1?.trim()
-    if (!pin) continue
-
-    // For block-rule streets, validate number range
-    if (/PINELAND|LEROY|LITTLE RIVER|PROSPERITY|ARLINGTON BLVD|PICKETT/i.test(addr ?? '')) {
-      if (passesBlockRule(addr)) {
-        pins.push(pin)
-        blockAddrs[pin] = addr
-      }
-    } else {
-      pins.push(pin)
-    }
+    const pin = f.attributes.PARCEL_PIN?.trim()
+    if (pin) pins.push(pin)
   }
-  return { pins: [...new Set(pins)], blockAddrs }
+  return [...new Set(pins)]
 }
 
 // Step 2: query sales for specific PINs in chunks
@@ -239,9 +203,9 @@ async function fetchZoningCases(pins) {
   return all.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
 }
 
-router.get('/', async (c) => {
+router.get('/', authenticate, async (c) => {
   const kv = c.env.CACHE
-  const CACHE_KEY = 'property:v13'
+  const CACHE_KEY = 'property:v14'
   const TTL = 60 * 60
 
   if (kv) {
@@ -249,7 +213,7 @@ router.get('/', async (c) => {
     if (cached) return c.json(JSON.parse(cached))
   }
 
-  const { pins } = await fetchNeighborhoodPins().catch(() => ({ pins: [] }))
+  const pins = await fetchNeighborhoodPins().catch(() => [])
 
   const [sales, permits, assessments, zoningCases] = await Promise.all([
     fetchSalesByPins(pins).catch(() => []),

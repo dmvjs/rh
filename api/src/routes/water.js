@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { authenticate } from '../middleware/auth.js'
 
 const router = new Hono()
 
@@ -20,6 +21,15 @@ const USGS_IV_URL = 'https://waterservices.usgs.gov/nwis/iv/'
 
 // Virginia DEQ water quality — Accotink Creek HUC
 const HUC8 = '02080105' // Middle Potomac-Anacostia-Occoquan
+
+// NWS alerts for Fairfax County VA
+const NWS_ALERTS_URL = 'https://api.weather.gov/alerts/active?zone=VAC059'
+
+// USGS WaterWatch flood stage thresholds
+const WATERWATCH_URL = 'https://waterwatch.usgs.gov/webservices/floodstage?format=json'
+
+// EPA SDWIS — drinking water violations for Fairfax Water (VA6059079)
+const SDWIS_URL = 'https://data.epa.gov/efservice/VIOLATION/PWSID/VA6059079/JSON'
 
 async function fetchStreamGauges() {
   const sites = GAUGES.map(g => g.id).join(',')
@@ -94,6 +104,61 @@ async function fetchAttains() {
   return results
 }
 
+async function fetchFloodStages() {
+  const res = await fetch(WATERWATCH_URL).catch(() => null)
+  if (!res?.ok) return {}
+  const data = await res.json()
+  const out = {}
+  for (const s of (data.sites ?? [])) {
+    out[s.site_no] = {
+      action:   parseFloat(s.action_stage)   || null,
+      flood:    parseFloat(s.flood_stage)    || null,
+      moderate: parseFloat(s.moderate_stage) || null,
+      major:    parseFloat(s.major_stage)    || null,
+    }
+  }
+  return out
+}
+
+async function fetchNWSAlerts() {
+  const res = await fetch(NWS_ALERTS_URL, {
+    headers: { 'User-Agent': 'ridgeleahills/1.0 (admin@ridgeleahills.com)', 'Accept': 'application/geo+json' },
+  }).catch(() => null)
+  if (!res?.ok) return []
+  const data = await res.json()
+  return (data.features ?? [])
+    .filter(f => /(flood|water|hydro)/i.test(f.properties?.event ?? ''))
+    .map(f => ({
+      event:    f.properties.event,
+      headline: f.properties.headline,
+      severity: f.properties.severity,
+      onset:    f.properties.onset,
+      expires:  f.properties.expires,
+      desc:     f.properties.description?.slice(0, 400),
+    }))
+}
+
+async function fetchDrinkingWater() {
+  const res = await fetch(SDWIS_URL).catch(() => null)
+  if (!res?.ok) return []
+  const data = await res.json().catch(() => [])
+  // Return recent violations (last 5 years), most recent first
+  const cutoff = new Date()
+  cutoff.setFullYear(cutoff.getFullYear() - 5)
+  return data
+    .filter(v => v.COMPL_PER_BEGIN_DATE && new Date(v.COMPL_PER_BEGIN_DATE) > cutoff)
+    .sort((a, b) => (b.COMPL_PER_BEGIN_DATE ?? '').localeCompare(a.COMPL_PER_BEGIN_DATE ?? ''))
+    .slice(0, 20)
+    .map(v => ({
+      violation:   v.VIOLATION_NAME,
+      category:    v.VIOLATION_CATEGORY_CODE,
+      beginDate:   v.COMPL_PER_BEGIN_DATE?.slice(0, 10),
+      endDate:     v.COMPL_PER_END_DATE?.slice(0, 10),
+      rtcDate:     v.RTC_DATE?.slice(0, 10),
+      isHealthBased: v.IS_HEALTH_BASED_IND === 'Y',
+    }))
+}
+
 async function fetchFloodStage() {
   // USGS flood stage thresholds for Accotink Creek
   const params = new URLSearchParams({
@@ -116,9 +181,9 @@ async function fetchFloodStage() {
   })).filter(p => !isNaN(p.v))
 }
 
-router.get('/', async (c) => {
+router.get('/', authenticate, async (c) => {
   const kv       = c.env.CACHE
-  const CACHE_KEY = 'water:v2'
+  const CACHE_KEY = 'water:v3'
   const TTL       = 60 * 15 // 15 min — stream data changes frequently
 
   if (kv) {
@@ -126,13 +191,22 @@ router.get('/', async (c) => {
     if (cached) return c.json(JSON.parse(cached))
   }
 
-  const [gauges, waterQuality, history] = await Promise.all([
+  const [gauges, waterQuality, history, floodStages, alerts, drinkingWater] = await Promise.all([
     fetchStreamGauges().catch(() => []),
     fetchAttains().catch(() => []),
     fetchFloodStage().catch(() => null),
+    fetchFloodStages().catch(() => ({})),
+    fetchNWSAlerts().catch(() => []),
+    fetchDrinkingWater().catch(() => []),
   ])
 
-  const result = { gauges, waterQuality, history, fetchedAt: new Date().toISOString() }
+  // Attach flood stage thresholds to each gauge
+  const gaugesWithStages = gauges.map(g => ({
+    ...g,
+    floodStages: floodStages[g.id] ?? null,
+  }))
+
+  const result = { gauges: gaugesWithStages, waterQuality, history, alerts, drinkingWater, fetchedAt: new Date().toISOString() }
   if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
   return c.json(result)
 })

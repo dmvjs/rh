@@ -413,6 +413,8 @@ footer a { color: var(--muted); text-decoration: underline; }
   align-items: start;
 }
 
+#ad-mobile-banner, #ad-mobile-rect { display: none !important; }
+
 @media (max-width: 960px) {
   .news-layout {
     grid-template-columns: 1fr;
@@ -421,41 +423,229 @@ footer a { color: var(--muted); text-decoration: underline; }
     border-top: 1px solid var(--border);
     padding-top: 24px;
   }
+  .ad-leaderboard { display: none !important; }
+  #ad-skyscraper  { display: none !important; }
+  #ad-mobile-banner, #ad-mobile-rect { display: block !important; }
 }
 
 /* ─── News ───────────────────────────────────────────────── */
 
+/* Hero — first article, full width */
+.news-hero {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0 24px;
+}
+.news-hero:hover .news-hero-title { text-decoration: underline; }
+
+.news-hero-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  display: block;
+  margin-bottom: 16px;
+  background: var(--border);
+}
+
+.news-hero-body { }
+
+.news-hero-title {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.3px;
+  margin: 0 0 8px;
+}
+
+.news-hero-snippet {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Standard card — remaining articles */
 .news-card {
   display: flex;
-  gap: 16px;
-  padding: 16px 0;
+  gap: 14px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: var(--text);
   align-items: flex-start;
 }
-
-.news-title-link { text-decoration: none; color: var(--text); }
 .news-card:hover .news-title { text-decoration: underline; }
 
-.news-img {
-  width: 100px;
-  height: 70px;
+.news-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.news-thumb-wrap {
+  flex-shrink: 0;
+}
+
+.news-thumb {
+  width: 90px;
+  height: 64px;
   object-fit: cover;
   border-radius: var(--radius);
-  flex-shrink: 0;
+  display: block;
   background: var(--border);
 }
 
-.news-img-placeholder { background: var(--border); }
+/* Shared title / snippet / meta */
+.news-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-snippet {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0 0 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-meta { font-size: 12px; color: var(--muted); margin: 0; }
 
 .news-domain { font-weight: 600; color: var(--accent); }
 
-.news-title { font-size: 15px; line-height: 1.4; margin-bottom: 5px; }
+/* Local neighborhood badge */
+.news-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin-bottom: 6px;
+}
 
-.news-snippet { font-size: 13px; color: var(--muted); line-height: 1.4; margin-bottom: 5px; }
+/* Skeleton loaders — mirror real layout */
+.news-sk-hero {
+  padding: 20px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.news-sk-img {
+  width: 100%;
+  height: 260px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.news-sk-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.news-sk-lines {
+  flex: 1;
+  min-width: 0;
+}
+.news-sk-badge  { width: 80px;  height: 14px; margin-bottom: 10px; }
+.news-sk-t1     { width: 92%;   height: 15px; margin-bottom: 8px; }
+.news-sk-t2     { width: 68%;   height: 15px; margin-bottom: 8px; }
+.news-sk-meta   { width: 44%;   height: 12px; margin-top: 4px; }
+.news-sk-thumb  { width: 90px;  height: 64px; flex-shrink: 0; border-radius: var(--radius); }
 
-.news-meta { font-size: 12px; color: var(--muted); }
+@media (max-width: 700px) {
+  .news-sk-img   { height: 180px; }
+  .news-sk-thumb { width: 72px; height: 52px; }
+}
+
+/* Neighborhood sidebar */
+.nbhd-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.nbhd-incident {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.nbhd-incident:last-of-type { border-bottom: none; }
+
+.nbhd-incident-type {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+
+.nbhd-incident-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.nbhd-article {
+  display: block;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+}
+.nbhd-article:last-child { border-bottom: none; }
+.nbhd-article:hover .nbhd-article-title { text-decoration: underline; }
+
+.nbhd-article-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nbhd-article-snippet {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0 0 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nbhd-article-meta { font-size: 11px; color: var(--muted); margin: 0; }
+
+@media (max-width: 700px) {
+  .news-hero-img    { height: 180px; }
+  .news-hero-title  { font-size: 18px; }
+  .news-snippet     { -webkit-line-clamp: 2; }
+  .news-hero-snippet { -webkit-line-clamp: 2; }
+  .news-thumb       { width: 72px; height: 52px; }
+}
 
 /* ─── Loading ────────────────────────────────────────────── */
 
@@ -473,33 +663,6 @@ footer a { color: var(--muted); text-decoration: underline; }
   100% { background-position: -200% 0; }
 }
 
-/* ─── Police / local incident items ─────────────────────── */
-
-.police-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.police-item:last-child { border-bottom: none; }
-
-.police-type {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.police-addr {
-  font-size: 13px;
-  color: var(--text);
-  margin: 1px 0;
-}
-
-.police-meta {
-  font-size: 11px;
-  color: var(--muted);
-}
 
 /* ─── Politics page ─────────────────────────────────────── */
 
@@ -784,36 +947,103 @@ footer a { color: var(--muted); text-decoration: underline; }
 
 /* ─── Cameras page ──────────────────────────────────────── */
 
-.cam-section {
-  margin-bottom: 40px;
+.cam-intro {
+  padding: 40px 0 36px;
+  border-bottom: 1px solid var(--border);
+}
+.cam-intro-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.cam-intro-title {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+}
+.cam-intro-sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0 0 12px;
+  max-width: 560px;
+  line-height: 1.65;
+}
+.cam-intro-meta {
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .75;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.cam-section-title {
-  font-size: .7rem;
-  font-weight: 600;
-  text-transform: uppercase;
+@keyframes cam-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .25; }
+}
+.cam-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: cam-pulse 2s ease-in-out infinite;
+}
+
+.cam-section {
+  padding: 36px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cam-section:last-of-type { border-bottom: none; }
+
+.cam-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.cam-section-label {
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.cam-section-count {
+  font-size: 12px;
   color: var(--muted);
-  margin: 0 0 14px;
 }
 
 .cam-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .cam-card {
-  background: var(--card);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
+  transition: box-shadow .15s, border-color .15s;
 }
+.cam-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,.07);
+  border-color: #ccc;
+}
+.cam-card.cam-unavailable { opacity: .45; }
 
 .cam-img-wrap {
   position: relative;
   aspect-ratio: 16 / 9;
   background: #111;
+  overflow: hidden;
 }
 
 .cam-img {
@@ -827,29 +1057,78 @@ footer a { color: var(--muted); text-decoration: underline; }
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0,0,0,.55);
+  background: rgba(0,0,0,.6);
   color: #fff;
-  font-size: .65rem;
-  font-weight: 600;
-  letter-spacing: .06em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
+.cam-body { padding: 10px 12px 12px; }
 .cam-label {
-  font-size: .8rem;
-  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
   margin: 0;
-  padding: 8px 12px;
+  line-height: 1.3;
+}
+
+.cam-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 0 0;
+}
+
+.cam-alert {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border-left: 3px solid;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.cam-alert-adv {
+  background: #fefce8;
+  border-color: #ca8a04;
+  color: #713f12;
+}
+.cam-alert-warn {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #7f1d1d;
+}
+.cam-alert-event {
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cam-alert-text {
+  color: inherit;
+  opacity: .85;
+}
+
+
+.cam-credit {
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .65;
+  padding: 28px 0;
+  text-align: center;
+  line-height: 1.6;
 }
 
 /* ─── Restaurants page ───────────────────────────────────── */
 
-#rst-map {
+#rst-map, #park-map {
   height: 420px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  margin: 32px 0 0;
+  margin: 0;
   overflow: hidden;
 }
 
@@ -1164,12 +1443,15 @@ details.tr-alerts[open] .tr-alerts-summary::after { transform: rotate(90deg); }
   opacity: 0.4;
 }
 
-.wx-widget-sidebar {
-  padding: 20px 0 14px;
+
+.wx-widget-inline {
+  display: flex;
+  padding: 16px 0 14px;
   border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
 }
-.wx-widget-sidebar .wx-widget-temp  { font-size: 40px; }
-.wx-widget-sidebar .wx-widget-emoji { font-size: 22px; }
+.wx-widget-inline .wx-widget-temp  { font-size: 40px; }
+.wx-widget-inline .wx-widget-emoji { font-size: 22px; }
 
 /* ─── Weather page ───────────────────────────────────────── */
 
@@ -1550,6 +1832,130 @@ details.tr-alerts[open] .tr-alerts-summary::after { transform: rotate(90deg); }
   .wx-con-cell { padding: 8px 5px; font-size: 12px; gap: 3px; }
 }
 
+/* ─── Wildlife page ──────────────────────────────────────── */
+
+.wl-intro {
+  padding: 40px 0 36px;
+  border-bottom: 1px solid var(--border);
+}
+.wl-intro-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.wl-intro-title {
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  margin: 0 0 12px;
+}
+.wl-intro-sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0 0 12px;
+  max-width: 560px;
+  line-height: 1.65;
+}
+.wl-intro-meta {
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .65;
+  margin: 0;
+}
+
+.wl-section {
+  padding: 36px 0;
+  border-bottom: 1px solid var(--border);
+}
+.wl-section:last-of-type { border-bottom: none; }
+
+.wl-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.wl-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.wl-section-count {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.wl-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.wl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: box-shadow .15s, border-color .15s;
+}
+.wl-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,.07);
+  border-color: #ccc;
+  text-decoration: none;
+}
+
+.wl-card-photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  background: var(--border);
+}
+
+.wl-card-body {
+  padding: 10px 12px 13px;
+}
+
+.wl-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 2px;
+  line-height: 1.3;
+}
+
+.wl-card-sci {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.wl-card-date {
+  font-size: 11px;
+  color: var(--muted);
+  opacity: .6;
+  margin: 0;
+}
+
+.wl-credit {
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .65;
+  padding: 28px 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
 /* ─── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 768px) {
@@ -1589,4 +1995,12 @@ details.tr-alerts[open] .tr-alerts-summary::after { transform: rotate(90deg); }
   header { position: relative; }
 
   .detail-title { font-size: 18px; }
+
+  /* Wildlife mobile */
+  .wl-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .wl-intro-title { font-size: 26px; }
+
+  /* Cameras mobile */
+  .cam-grid { grid-template-columns: 1fr; }
+  .cam-intro-title { font-size: 26px; }
 }

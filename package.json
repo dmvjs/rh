@@ -4,6 +4,9 @@
   "private": true,
   "workspaces": ["api", "web"],
   "scripts": {
-    "deploy": "./deploy.sh"
+    "dev": "./dev.sh",
+    "deploy:api": "./deploy-api.sh",
+    "deploy:web": "./deploy-web.sh",
+    "deploy": "./deploy-api.sh && ./deploy-web.sh"
   }
 }

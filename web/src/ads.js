@@ -30,7 +30,7 @@ export async function renderAd(el, size) {
   el.style.display = 'block'
   el.innerHTML = `
     <a href="${ad.click_url}" target="_blank" rel="noopener sponsored"
-       style="display:block;line-height:0;">
+       style="display:block;line-height:0;width:${w}px;max-width:100%;margin:0 auto;">
       <img src="${ad.image_url}" width="${w}" height="${h}" alt=""
            style="max-width:100%;height:auto;display:block;border:0;">
     </a>

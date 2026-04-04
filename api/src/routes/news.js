@@ -15,6 +15,9 @@ const FEEDS = [
   'https://patch.com/virginia/fairfax/rss.xml',
   'https://www.fairfaxtimes.com/feed/',
   'https://news.google.com/rss/search?q=Annandale+Virginia+news&hl=en-US&gl=US&ceid=US:en',
+  // Neighborhood-specific searches — surface any mention of the community
+  'https://news.google.com/rss/search?q=%22Ridgelea+Hills%22+Virginia&hl=en-US&gl=US&ceid=US:en',
+  'https://news.google.com/rss/search?q=%22Ridglea+Hills%22+Virginia&hl=en-US&gl=US&ceid=US:en',
 ]
 
 const LOCAL_FEEDS = [
@@ -127,7 +130,7 @@ function parseXml(xml) {
 
     const skipRe = /\b(murder(ed|s|ing)?|shooting|bomb(ed|ing|s)?|terror(ist|ism)?|death row|massacre|execut(ed|ion)|hostage|riot(s|ing)?|gunman|gunfire|arson|overdose|suicide|birth defect)\b/i
     const checkText = `${title ?? ''} ${snippet ?? ''}`
-    const skip = /daily debrief|morning notes|news recap|obituar/i.test(title ?? '')
+    const skip = /daily debrief|morning notes|news recap|obituar|\bglance\b|scoreboard|standings|box score|\bw l t\b/i.test(title ?? '')
       || skipRe.test(checkText)
     if (title && link && !skip) items.push({ title, url: link, image, video, publishedAt: pubDate, author, snippet, domain })
   }
@@ -141,9 +144,18 @@ function fetchFeed(url) {
 }
 
 router.get('/', async (c) => {
+  const kv = c.env.CACHE
+  const CACHE_KEY = 'news:v3'
+  const TTL = 60 * 20
+
+  if (kv) {
+    const cached = await kv.get(CACHE_KEY)
+    if (cached) return c.json(JSON.parse(cached))
+  }
+
   const results = await Promise.allSettled(FEEDS.map(fetchFeed))
 
-  const sorted = results
+  const all = results
     .filter(r => r.status === 'fulfilled')
     .flatMap(r => r.value)
     .filter(a => {
@@ -154,19 +166,38 @@ router.get('/', async (c) => {
       const text = `${a.title ?? ''} ${a.snippet ?? ''}`
       return AREA_RE.test(text)
     })
+    .map(a => ({
+      ...a,
+      local: LOCAL_RE.test(`${a.title ?? ''} ${a.snippet ?? ''}`),
+    }))
     .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
 
-  const seen = {}
+  // Local stories always float to the top
+  const localItems    = all.filter(a => a.local)
+  const regionalItems = all.filter(a => !a.local)
+
   const seenTitles = new Set()
-  const articles = sorted.filter(a => {
+  const domainCount = {}
+
+  function admit(a) {
     const titleKey = (a.title ?? '').toLowerCase().replace(/\W+/g, ' ').trim().slice(0, 60)
     if (seenTitles.has(titleKey)) return false
     seenTitles.add(titleKey)
-    seen[a.domain] = (seen[a.domain] ?? 0) + 1
-    return seen[a.domain] <= 3
-  }).slice(0, 9)
+    if (!a.local) {
+      domainCount[a.domain] = (domainCount[a.domain] ?? 0) + 1
+      if (domainCount[a.domain] > 3) return false
+    }
+    return true
+  }
 
-  return c.json({ articles })
+  const articles = [
+    ...localItems.filter(admit),
+    ...regionalItems.filter(admit),
+  ].slice(0, 12)
+
+  const result = { articles }
+  if (kv && articles.length > 0) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
+  return c.json(result)
 })
 
 function parsePoliceRow(line) {
@@ -233,6 +264,15 @@ async function fetchPolice(kv) {
 }
 
 router.get('/local', async (c) => {
+  const kv = c.env.CACHE
+  const CACHE_KEY = 'news-local:v2'
+  const TTL = 60 * 20
+
+  if (kv) {
+    const cached = await kv.get(CACHE_KEY)
+    if (cached) return c.json(JSON.parse(cached))
+  }
+
   const [feedResults, policeResult] = await Promise.all([
     Promise.allSettled(LOCAL_FEEDS.map(fetchFeed)),
     fetchPolice(c.env.CACHE).catch(() => ({ incidents: [], nearby: false })),
@@ -246,6 +286,8 @@ router.get('/local', async (c) => {
     .filter(a => {
       if (BLOCKED_DOMAINS.has(a.domain)) return false
       if (!looksEnglish(a.title)) return false
+      const age = Date.now() - new Date(a.publishedAt)
+      if (age > 90 * 24 * 60 * 60 * 1000) return false
       const text = `${a.title ?? ''} ${a.snippet ?? ''}`
       return LOCAL_RE.test(text)
     })
@@ -257,7 +299,9 @@ router.get('/local', async (c) => {
     })
     .slice(0, 20)
 
-  return c.json({ local, police: police.incidents })
+  const result = { local, police: police.incidents }
+  if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
+  return c.json(result)
 })
 
 export default router

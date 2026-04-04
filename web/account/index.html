@@ -17,10 +17,30 @@
         <a href="/post/" class="btn btn-sm">+ new post</a>
       </div>
       <div id="my-listings"></div>
+
+      <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);">
+        <p style="font-size:13px;font-weight:600;margin:0 0 6px;">Delete account</p>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 14px;">Permanently removes your account and all your posts.</p>
+        <button id="delete-account-btn" class="btn btn-sm btn-danger">Delete my account</button>
+      </div>
     </div>
   </main>
 
   <div id="site-footer"></div>
+
+  <div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:28px 24px;max-width:360px;width:90%;margin:auto;">
+      <p style="font-size:15px;font-weight:600;margin:0 0 8px;">Delete account</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 18px;">This permanently removes your account and all your posts. Type <strong>delete</strong> to confirm.</p>
+      <input id="delete-confirm-input" type="text" placeholder="delete" autocomplete="off"
+             style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:4px;font-size:14px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button id="delete-modal-cancel" class="btn btn-sm">Cancel</button>
+        <button id="delete-modal-confirm" class="btn btn-sm btn-danger" disabled>Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="/src/account.js"></script>
 </body>
 </html>

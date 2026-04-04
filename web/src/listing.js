@@ -38,7 +38,8 @@ async function init() {
   document.title = `${listing.title} — Ridglea Hills`
 
   const price = fmtPrice(listing.price)
-  const canDelete = user && (user.id === listing.user_id || user.admin)
+  const canEdit   = user && user.id === listing.user_id
+  const canDelete = user && (user.id === listing.user_id || user.role === 'admin' || user.role === 'moderator')
 
   document.getElementById('listing-content').innerHTML = `
     <div class="listing-detail">
@@ -58,11 +59,6 @@ async function init() {
         </div>
       ` : ''}
       <p class="detail-body">${escHtml(listing.body)}</p>
-      ${listing.author_email ? `
-        <p style="margin-top:20px;font-size:13px;color:var(--muted)">
-          <a href="mailto:${escHtml(listing.author_email)}" style="color:var(--muted)">email the poster</a>
-        </p>
-      ` : ''}
       ${listing.contact_email || listing.contact_phone ? `
         <div class="contact-box">
           <h3>Contact</h3>
@@ -70,9 +66,10 @@ async function init() {
           ${listing.contact_phone ? `<p>${escHtml(listing.contact_phone)}</p>` : ''}
         </div>
       ` : ''}
-      ${canDelete ? `
-        <div style="margin-top:24px">
-          <button id="delete-btn" class="btn btn-danger btn-sm">Remove listing</button>
+      ${canEdit || canDelete ? `
+        <div style="margin-top:24px;display:flex;gap:8px;">
+          ${canEdit   ? `<a href="/post/?edit=${id}" class="btn btn-sm">Edit</a>` : ''}
+          ${canDelete ? `<button id="delete-btn" class="btn btn-sm btn-danger">Remove</button>` : ''}
         </div>
       ` : ''}
     </div>

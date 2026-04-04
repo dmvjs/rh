@@ -3,9 +3,9 @@ import { Hono } from 'hono'
 const router = new Hono()
 
 // Zip codes covering Ridglea Hills / Annandale / Falls Church area
-const ZIPS = ['22003', '22041', '22042', '22044', '22046']
+const ZIPS = ['22031']
 
-const FEC_URL = 'https://api.fec.gov/v1/schedules/schedule_a/'
+const FEC_URL = 'https://api.open.fec.gov/v1/schedules/schedule_a/'
 
 // Fetch contributions for a single zip + cycle
 async function fetchForZip(zip, cycle, apiKey) {
@@ -59,7 +59,7 @@ router.get('/', async (c) => {
     .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
 
   const result = { donations, fetchedAt: new Date().toISOString() }
-  if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
+  if (kv && donations.length > 0) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
   return c.json(result)
 })
 

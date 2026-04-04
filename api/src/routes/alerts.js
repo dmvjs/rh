@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { authenticate } from '../middleware/auth.js'
 
 const router = new Hono()
 
@@ -43,7 +44,7 @@ function parseRss(xml, source) {
   return items
 }
 
-router.get('/', async (c) => {
+router.get('/', authenticate, async (c) => {
   const kv = c.env.CACHE
   const CACHE_KEY = 'alerts:v1'
   const TTL = 60 * 15  // 15 min — these matter more if fresh

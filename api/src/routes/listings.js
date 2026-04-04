@@ -9,7 +9,7 @@ const CATEGORIES = new Set([
 
 const parse = (row) => ({ ...row, images: JSON.parse(row.images) })
 
-router.get('/', async (c) => {
+router.get('/', authenticate, async (c) => {
   const { category, limit = '50', offset = '0' } = c.req.query()
   const safeLimit  = Math.min(Math.max(Number(limit)  || 0, 0), 100)
   const safeOffset = Math.max(Number(offset) || 0, 0)
@@ -42,21 +42,16 @@ router.get('/mine', authenticate, async (c) => {
   return c.json({ listings: results.map(parse) })
 })
 
-router.get('/:id', async (c) => {
+router.get('/:id', authenticate, async (c) => {
   const listing = await c.env.DB.prepare(
-    'SELECT l.*, u.name AS author, u.email AS author_email FROM listings l JOIN users u ON u.id = l.user_id WHERE l.id = ? AND l.active = 1'
+    'SELECT l.*, u.name AS author FROM listings l JOIN users u ON u.id = l.user_id WHERE l.id = ? AND l.active = 1'
   ).bind(Number(c.req.param('id'))).first()
   if (!listing) return c.json({ error: 'Not found' }, 404)
-
-  // only expose author email to authenticated users
-  const token = c.req.header('Authorization')?.slice(7)
-  if (!token) delete listing.author_email
-
   return c.json(parse(listing))
 })
 
 router.post('/', authenticate, async (c) => {
-  const { id, role } = c.get('user')
+  const { id } = c.get('user')
   const { category, title, body, price, images = [], contact_email, contact_phone } = await c.req.json().catch(() => ({}))
 
   if (!category || !title || !body) return c.json({ error: 'category, title, and body are required' }, 400)
@@ -73,6 +68,31 @@ router.post('/', authenticate, async (c) => {
   ).run()
 
   return c.json({ id: meta.last_row_id }, 201)
+})
+
+router.patch('/:id', authenticate, async (c) => {
+  const { id } = c.get('user')
+  const listing = await c.env.DB.prepare('SELECT user_id FROM listings WHERE id = ? AND active = 1')
+    .bind(Number(c.req.param('id'))).first()
+  if (!listing) return c.json({ error: 'Not found' }, 404)
+  if (listing.user_id !== id) return c.json({ error: 'Forbidden' }, 403)
+
+  const { category, title, body, price, images, contact_email, contact_phone } = await c.req.json().catch(() => ({}))
+  if (!category || !title || !body) return c.json({ error: 'category, title, and body are required' }, 400)
+  if (!CATEGORIES.has(category)) return c.json({ error: 'Invalid category' }, 400)
+
+  await c.env.DB.prepare(
+    'UPDATE listings SET category=?, title=?, body=?, price=?, images=?, contact_email=?, contact_phone=? WHERE id=?'
+  ).bind(
+    category, title.trim(), body.trim(),
+    price != null ? Math.round(Number(price) * 100) : null,
+    JSON.stringify(images ?? []),
+    contact_email?.trim() || null,
+    contact_phone?.trim() || null,
+    Number(c.req.param('id')),
+  ).run()
+
+  return c.json({ ok: true })
 })
 
 router.delete('/:id', authenticate, async (c) => {

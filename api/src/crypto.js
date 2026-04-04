@@ -24,5 +24,11 @@ function pbkdf2Params(salt, iterations = ITERATIONS) {
   return { name: 'PBKDF2', hash: 'SHA-256', salt, iterations }
 }
 
+export async function hashEmail(email) {
+  const normalized = email.trim().toLowerCase()
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized))
+  return hex(new Uint8Array(buf))
+}
+
 const hex    = (buf) => Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('')
 const unhex  = (s)   => new Uint8Array(s.match(/.{2}/g).map(b => parseInt(b, 16)))

@@ -2,7 +2,7 @@ import { renderHeader, renderFooter, requireAuth } from './header.js'
 import { api } from './api.js'
 
 function escHtml(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 function roleBadge(role) {
@@ -14,37 +14,38 @@ function pendingRow(u) {
   return `
     <tr data-id="${u.id}">
       <td>${escHtml(u.name)}</td>
-      <td>${escHtml(u.email)}</td>
-      <td>${escHtml(u.address)}</td>
-      <td>${escHtml(u.phone)}</td>
+      <td style="white-space:nowrap;">${escHtml(u.address)}</td>
       <td>${escHtml(u.note)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;">
-        <button class="btn btn-sm approve-btn">Approve</button>
-        <button class="btn btn-sm btn-danger reject-btn">Reject</button>
+      <td><span class="badge ${u.email_verified ? 'badge-approved' : ''}">${u.email_verified ? 'verified' : 'unverified'}</span></td>
+      <td style="white-space:nowrap;">
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm approve-btn">Approve</button>
+          <button class="btn btn-sm btn-danger reject-btn">Reject</button>
+        </div>
       </td>
     </tr>
   `
 }
 
-function memberRow(u, viewerRole) {
-  const isAdmin = viewerRole === 'admin'
+function memberRow(u, viewerRole, viewerId) {
+  const isAdmin  = viewerRole === 'admin'
+  const isSelf   = u.id === viewerId
   return `
     <tr data-id="${u.id}">
-      <td>${escHtml(u.name)}</td>
-      <td>${escHtml(u.email)}</td>
-      <td>${escHtml(u.address)}</td>
-      <td>${roleBadge(u.role)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;">
+      <td style="white-space:nowrap;font-size:.85rem;">${escHtml(u.name)}</td>
+      <td style="white-space:nowrap;font-size:.85rem;">${escHtml(u.address)}</td>
+      <td>
         ${isAdmin ? `
-          <select class="role-select" style="font-size:13px;padding:3px 6px;">
-            <option value="user"      ${u.role === 'user'      ? 'selected' : ''}>user</option>
-            <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>moderator</option>
-            <option value="admin"     ${u.role === 'admin'     ? 'selected' : ''}>admin</option>
-          </select>
-          <button class="btn btn-sm role-btn">Save</button>
-          <button class="btn btn-sm btn-danger delete-btn">Remove</button>
-        ` : ''}
+          <div style="display:flex;gap:6px;">
+            <select class="role-select" style="font-size:13px;padding:3px 6px;max-width:110px;">
+              <option value="user"      ${u.role === 'user'      ? 'selected' : ''}>user</option>
+              <option value="moderator" ${u.role === 'moderator' ? 'selected' : ''}>moderator</option>
+              <option value="admin"     ${u.role === 'admin'     ? 'selected' : ''}>admin</option>
+            </select>
+            <button class="btn btn-sm role-btn">Save</button>
+          </div>` : roleBadge(u.role)}
       </td>
+      <td>${isAdmin && !isSelf ? `<button class="btn btn-sm btn-danger delete-btn">Remove</button>` : ''}</td>
     </tr>
   `
 }
@@ -59,19 +60,19 @@ function tableWrap(cols, rows) {
   `
 }
 
-async function load(viewerRole) {
+async function load(viewerRole, viewerId) {
   const { users } = await api.get('/api/admin/users')
   const pending  = users.filter(u => !u.approved)
   const members  = users.filter(u => u.approved)
 
   document.getElementById('pending').innerHTML = tableWrap(
-    ['Name', 'Email', 'Address', 'Phone', 'Note', ''],
+    ['Name', 'Address', 'Note', 'Email', ''],
     pending.length ? pending.map(pendingRow).join('') : null
   )
 
   document.getElementById('all-users').innerHTML = tableWrap(
-    ['Name', 'Email', 'Address', 'Role', ''],
-    members.length ? members.map(u => memberRow(u, viewerRole)).join('') : null
+    ['Name', 'Address', 'Role', ''],
+    members.length ? members.map(u => memberRow(u, viewerRole, viewerId)).join('') : null
   )
 
   document.querySelectorAll('.approve-btn').forEach(btn => {
@@ -105,6 +106,7 @@ async function load(viewerRole) {
       load(viewerRole)
     })
   })
+
 }
 
 async function loadTrusted() {
@@ -118,12 +120,12 @@ async function loadTrusted() {
 
   el.innerHTML = `
     <table class="admin-table">
-      <thead><tr><th>Email</th><th>Address</th><th></th></tr></thead>
+      <thead><tr><th>Address</th><th>ID</th><th></th></tr></thead>
       <tbody>
         ${trusted.map(t => `
           <tr data-id="${t.id}">
-            <td>${escHtml(t.email)}</td>
-            <td>${escHtml(t.address ?? '—')}</td>
+            <td style="white-space:nowrap;font-size:.85rem;">${escHtml(t.address ?? '—')}</td>
+            <td style="font-family:monospace;font-size:.8rem;color:var(--muted);">${escHtml(t.hash_prefix)}</td>
             <td><button class="btn btn-sm btn-danger trusted-delete-btn">Remove</button></td>
           </tr>
         `).join('')}
@@ -159,9 +161,11 @@ async function loadAds() {
             <td><img src="${escHtml(a.image_url)}" style="max-height:40px;max-width:80px;object-fit:contain;"></td>
             <td style="font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.click_url)}</td>
             <td><span class="badge ${a.active ? 'badge-approved' : ''}">${a.active ? 'Active' : 'Paused'}</span></td>
-            <td style="white-space:nowrap;display:flex;gap:6px;">
-              <button class="btn btn-sm ad-toggle-btn">${a.active ? 'Pause' : 'Activate'}</button>
-              <button class="btn btn-sm btn-danger ad-delete-btn">Remove</button>
+            <td style="white-space:nowrap;">
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-sm ad-toggle-btn">${a.active ? 'Pause' : 'Activate'}</button>
+                <button class="btn btn-sm btn-danger ad-delete-btn">Remove</button>
+              </div>
             </td>
           </tr>
         `).join('')}
@@ -198,7 +202,7 @@ async function init() {
   }
 
   document.querySelector('main').style.visibility = ''
-  await load(user.role)
+  await load(user.role, user.id)
   await loadAds()
   await loadTrusted()
 

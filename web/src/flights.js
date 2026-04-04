@@ -129,7 +129,7 @@ async function init() {
   `
 
   await load(el)
-  setInterval(() => load(el), 30_000)
+  setInterval(() => load(el), 90_000)
 }
 
 init()

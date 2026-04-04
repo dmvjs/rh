@@ -1,11 +1,15 @@
 import { renderHeader, renderFooter } from './header.js'
 import { api } from './api.js'
+import { ADDRESSES } from './addresses.js'
 
 async function init() {
   await Promise.all([
     renderHeader(document.getElementById('site-header')),
     renderFooter(document.getElementById('site-footer')),
   ])
+
+  document.getElementById('address-list').innerHTML =
+    ADDRESSES.map(a => `<option value="${a.display}">`).join('')
 
   const form  = document.getElementById('register-form')
   const msgEl = document.getElementById('msg')
@@ -23,8 +27,6 @@ async function init() {
         email:    form.email.value.trim(),
         password: form.password.value,
         address:  form.address.value.trim(),
-        phone:    form.phone.value.trim() || null,
-        note:     form.note.value.trim()  || null,
       })
       msgEl.innerHTML = `<div class="msg msg-success">${message}</div>`
       form.reset()

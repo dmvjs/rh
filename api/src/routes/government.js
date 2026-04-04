@@ -1,127 +1,79 @@
 import { Hono } from 'hono'
+import { authenticate } from '../middleware/auth.js'
 
 const router = new Hono()
 
-// Representative address for Ridgelea Hills — used for district lookups
-const CIVIC_ADDRESS = '7450 Little River Tpke, Annandale, VA 22003'
-
-// Static fallback for officials Google Civic doesn't always include
-// (county school board, etc.) — update after each election cycle
-const STATIC_EXTRAS = [
+// Update after each election cycle
+const OFFICIALS = [
+  {
+    level: 'Federal', title: 'U.S. Senator', name: 'Mark R. Warner', party: 'D',
+    district: 'Virginia', term: 'Term through Jan 2027',
+    phones: [{ label: 'DC Office', number: '202-224-2023' }],
+    website: 'https://www.warner.senate.gov',
+    contact: 'https://www.warner.senate.gov/public/index.cfm/contact',
+  },
+  {
+    level: 'Federal', title: 'U.S. Senator', name: 'Tim Kaine', party: 'D',
+    district: 'Virginia', term: 'Term through Jan 2031',
+    phones: [{ label: 'DC Office', number: '202-224-4024' }],
+    website: 'https://www.kaine.senate.gov',
+    contact: 'https://www.kaine.senate.gov/contact',
+  },
+  {
+    level: 'Federal', title: 'U.S. Representative', name: 'Don Beyer', party: 'D',
+    district: "Virginia's 8th Congressional District", term: 'Term through Jan 2027',
+    phones: [{ label: 'DC Office', number: '202-225-4376' }],
+    website: 'https://beyer.house.gov',
+    contact: 'https://beyer.house.gov/contact/',
+  },
+  {
+    level: 'State', title: 'Governor', name: 'Glenn Youngkin', party: 'R',
+    district: 'Virginia', term: 'Term through Jan 2026',
+    phones: [{ label: 'Office', number: '804-786-2211' }],
+    website: 'https://www.governor.virginia.gov',
+    contact: 'https://www.governor.virginia.gov/contact-us/',
+  },
+  {
+    level: 'State', title: 'State Senator', name: 'Scott Surovell', party: 'D',
+    district: '36th Senate District', term: 'Term through Jan 2028',
+    phones: [{ label: 'Office', number: '703-647-7900' }],
+    website: 'https://www.scottsurovell.com',
+    contact: 'https://www.scottsurovell.com/contact/',
+  },
+  {
+    level: 'State', title: 'Delegate', name: 'Mark Sickles', party: 'D',
+    district: '43rd House District', term: 'Term through Jan 2026',
+    phones: [{ label: 'Office', number: '703-922-6440' }],
+    website: 'https://www.marksickles.com',
+    contact: 'https://virginiageneralassembly.gov/house/members/members.xhtml',
+  },
+  {
+    level: 'County', title: 'Board of Supervisors', name: 'Penny Gross', party: 'D',
+    district: 'Mason District', term: 'Term through Dec 2027',
+    phones: [{ label: 'Office', number: '703-256-7717' }],
+    website: 'https://www.fairfaxcounty.gov/mason/',
+    contact: 'https://www.fairfaxcounty.gov/mason/contact-mason-district',
+  },
   {
     level: 'County', title: 'School Board', name: 'Ricardy J. Anderson', party: 'D',
     district: 'Mason District — FCPS', term: 'Term through Dec 2027',
     phones: [{ label: 'Office', number: '571-423-1083' }],
     website: 'https://www.fcps.edu/staff/ricardy-anderson',
     contact: 'https://www.fcps.edu/submit-question-ricardy-anderson',
-    source: 'static',
   },
 ]
 
-const PARTY_MAP = {
-  'Democratic': 'D', 'Democrat': 'D',
-  'Republican': 'R',
-  'Independent': 'I', 'Nonpartisan': 'I',
-}
-
-const LEVEL_MAP = {
-  'country':           'Federal',
-  'administrativeArea1': 'State',
-  'administrativeArea2': 'County',
-  'locality':          'County',
-}
-
-const ROLE_TITLE_MAP = {
-  'headOfGovernment':          null,  // derive from office name
-  'legislatorUpperBody':       null,
-  'legislatorLowerBody':       null,
-  'deputyHeadOfGovernment':    null,
-  'governmentOfficer':         null,
-  'executiveCouncil':          null,
-  'highestCourtJudge':         null,
-  'judge':                     null,
-}
-
-async function fetchCivic(key) {
-  const url = `https://civicinfo.googleapis.com/civicinfo/v2/representatives`
-    + `?address=${encodeURIComponent(CIVIC_ADDRESS)}&key=${key}`
-
-  const res = await fetch(url)
-  if (!res.ok) return null
-  return res.json()
-}
-
-function parseOfficial(officeName, official, level) {
-  const party = PARTY_MAP[official.party] ?? 'I'
-  const phones = (official.phones ?? []).map((n, i) => ({
-    label: i === 0 ? 'Office' : `Phone ${i + 1}`,
-    number: n,
-  }))
-  const website = official.urls?.[0] ?? ''
-  const contact = official.channels?.find(c => c.type === 'Email')?.id
-    ? `mailto:${official.channels.find(c => c.type === 'Email').id}`
-    : website
-
-  return {
-    level,
-    title:   officeName,
-    name:    official.name,
-    party,
-    district: '',
-    term:    '',
-    phones,
-    website,
-    contact,
-    photo:   official.photoUrl ?? '',
-    address: official.address?.[0]
-      ? [official.address[0].line1, official.address[0].city, official.address[0].state].filter(Boolean).join(', ')
-      : '',
-    source: 'google',
-  }
-}
-
-function normalizeCivicData(data) {
-  const officials = []
-
-  for (const office of (data.offices ?? [])) {
-    const level = LEVEL_MAP[office.levels?.[0]] ?? 'Local'
-
-    for (const idx of (office.officialIndices ?? [])) {
-      const official = data.officials?.[idx]
-      if (!official) continue
-      officials.push(parseOfficial(office.name, official, level))
-    }
-  }
-
-  return officials
-}
-
-router.get('/', async (c) => {
-  const key = c.env.GOOGLE_CIVIC_KEY
-  const kv  = c.env.CACHE
-  const CACHE_KEY = 'government:officials:v2'
-  const TTL = 60 * 60 * 12  // 12 hours — officials rarely change mid-day
+router.get('/', authenticate, async (c) => {
+  const kv = c.env.CACHE
+  const CACHE_KEY = 'government:officials:v3'
+  const TTL = 60 * 60 * 12
 
   if (kv) {
     const cached = await kv.get(CACHE_KEY)
     if (cached) return c.json(JSON.parse(cached))
   }
 
-  if (!key) {
-    return c.json({ officials: STATIC_EXTRAS, fetchedAt: new Date().toISOString(), source: 'static' })
-  }
-
-  const data = await fetchCivic(key).catch(() => null)
-  if (!data) {
-    return c.json({ officials: STATIC_EXTRAS, fetchedAt: new Date().toISOString(), source: 'static' })
-  }
-
-  const officials = [
-    ...normalizeCivicData(data),
-    ...STATIC_EXTRAS,
-  ]
-
-  const result = { officials, fetchedAt: new Date().toISOString(), source: 'google' }
+  const result = { officials: OFFICIALS, fetchedAt: new Date().toISOString() }
 
   if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
 

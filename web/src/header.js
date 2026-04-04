@@ -33,9 +33,9 @@ export async function renderHeader(el) {
   const user = await getUser()
 
   el.innerHTML = `
-    <div class="beta-bar">
-      <div class="container">Have a ridgeleahills.org email? <a href="/register/" style="color:inherit;text-decoration:underline;">Sign up</a> for the full site.</div>
-    </div>
+    ${!user ? `<div class="beta-bar">
+      <div class="container">Have a ridgeleahills.org email? <a href="/register/" style="color:inherit;text-decoration:underline;">Sign up</a> — members get no ads.</div>
+    </div>` : ''}
     <header>
       <div class="container">
         <div class="header-inner">
@@ -50,13 +50,13 @@ export async function renderHeader(el) {
             <a href="/cameras/">cams</a>
             <a href="/property/">homes</a>
             <a href="/water/">water</a>
-            <a href="/flights/">flights</a>
-            <a href="/inspections/">food</a>
-            <a href="/donations/">donations</a>
+            <a href="/parks/">parks</a>
+            <a href="/wildlife/">wildlife</a>
+
+
             ${user
               ? `<a href="/community/">posts</a>
-                 <a href="/map/">map</a>
-                 <a href="/post/">+ post</a>
+<a href="/post/">+ post</a>
                  <a href="/account/">my posts</a>
                  ${user.role === 'admin' || user.role === 'moderator' ? '<a href="/admin/">admin</a>' : ''}
                  <a href="#" id="nav-logout">sign out</a>`

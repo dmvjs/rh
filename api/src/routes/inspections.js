@@ -76,16 +76,19 @@ async function fetchPlusPermits() {
   }))
 }
 
-// Match OSM establishment to nearest PLUS permit by lat/lon distance
-function distDeg(a, b) {
+// Haversine distance in meters
+function distMeters(a, b) {
   if (!a.lat || !b.lat) return Infinity
-  const dlat = a.lat - b.lat, dlon = a.lon - b.lon
-  return Math.sqrt(dlat * dlat + dlon * dlon)
+  const R = 6371000
+  const dLat = (b.lat - a.lat) * Math.PI / 180
+  const dLon = (b.lon - a.lon) * Math.PI / 180
+  const s = Math.sin(dLat/2)**2 + Math.cos(a.lat * Math.PI/180) * Math.cos(b.lat * Math.PI/180) * Math.sin(dLon/2)**2
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s))
 }
 
 router.get('/', async (c) => {
   const kv        = c.env.CACHE
-  const CACHE_KEY = 'inspections:v3'
+  const CACHE_KEY = 'inspections:v4'
   const TTL       = 60 * 60 * 6
 
   if (kv) {
@@ -98,24 +101,49 @@ router.get('/', async (c) => {
     fetchPlusPermits().catch(() => []),
   ])
 
-  // Match each OSM place to its nearest PLUS permit (within ~100m = 0.001 deg)
-  const MATCH_THRESHOLD = 0.001
-  const establishments = osmPlaces.map(place => {
-    let nearest = null, nearestDist = Infinity
-    for (const p of permits) {
-      const d = distDeg(place, p)
-      if (d < nearestDist) { nearestDist = d; nearest = p }
+  // One-to-one greedy matching: sort all (place, permit) pairs by distance,
+  // assign closest unmatched permit to each place within 50m threshold
+  const MATCH_THRESHOLD_M = 50
+  const pairs = []
+  for (const place of osmPlaces) {
+    for (const permit of permits) {
+      const d = distMeters(place, permit)
+      if (d < MATCH_THRESHOLD_M) pairs.push({ place, permit, d })
     }
+  }
+  pairs.sort((a, b) => a.d - b.d)
+
+  const matchedPlaces  = new Set()
+  const matchedPermits = new Set()
+  const assignments    = new Map()
+
+  for (const { place, permit, d } of pairs) {
+    if (matchedPlaces.has(place.osmId) || matchedPermits.has(permit.id)) continue
+    assignments.set(place.osmId, permit)
+    matchedPlaces.add(place.osmId)
+    matchedPermits.add(permit.id)
+  }
+
+  // Count how many OSM places are within 50m of each permit — only trust solo matches
+  const permitNeighbors = new Map()
+  for (const permit of permits) {
+    const nearby = osmPlaces.filter(place => distMeters(place, permit) < MATCH_THRESHOLD_M).length
+    permitNeighbors.set(permit.id, nearby)
+  }
+
+  const establishments = osmPlaces.map(place => {
+    const p = assignments.get(place.osmId) ?? null
+    const confident = p && permitNeighbors.get(p.id) === 1
     return {
       ...place,
-      permitId:   nearestDist < MATCH_THRESHOLD ? nearest?.id   : null,
-      permitUrl:  nearestDist < MATCH_THRESHOLD ? nearest?.url  : null,
-      permitDate: nearestDist < MATCH_THRESHOLD ? nearest?.date : null,
+      permitId:   confident ? p.id   : null,
+      permitUrl:  confident ? p.url  : null,
+      permitDate: confident ? p.date : null,
     }
   }).sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
 
   const result = { establishments, totalPermits: permits.length, fetchedAt: new Date().toISOString() }
-  if (kv) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
+  if (kv && establishments.length > 0) await kv.put(CACHE_KEY, JSON.stringify(result), { expirationTtl: TTL })
   return c.json(result)
 })
 
