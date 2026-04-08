@@ -181,7 +181,7 @@ async function fetchFloodStage() {
   })).filter(p => !isNaN(p.v))
 }
 
-router.get('/', authenticate, async (c) => {
+router.get('/', async (c) => {
   const kv       = c.env.CACHE
   const CACHE_KEY = 'water:v3'
   const TTL       = 60 * 15 // 15 min — stream data changes frequently

@@ -133,6 +133,7 @@ nav {
 }
 .nav-dropdown-menu a:hover { background: var(--bg); text-decoration: none; }
 .nav-dropdown.open .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu-left { right: auto; left: 0; }
 
 /* ─── Buttons ─────────────────────────────────────────────── */
 
@@ -449,6 +450,8 @@ footer a { color: var(--muted); text-decoration: underline; }
   align-items: start;
 }
 
+.news-layout aside { padding-top: 16px; }
+
 #ad-mobile-banner, #ad-mobile-rect { display: none !important; }
 
 @media (max-width: 960px) {
@@ -456,7 +459,7 @@ footer a { color: var(--muted); text-decoration: underline; }
     grid-template-columns: 1fr;
   }
   .news-layout aside { padding-top: 0; }
-  #neighborhood-section { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 8px; }
+  #neighborhood-section { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 20px; }
   .ad-leaderboard { display: none !important; }
   #ad-skyscraper  { display: none !important; }
   #ad-mobile-banner, #ad-mobile-rect { display: block !important; }
@@ -778,6 +781,373 @@ footer a { color: var(--muted); text-decoration: underline; }
 @media (max-width: 640px) {
   .pol-card-top { flex-direction: column; }
   .pol-election-date { min-width: 90px; }
+}
+
+/* ─── Government page ───────────────────────────────────── */
+
+.gov-next-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 26px;
+  margin-top: 28px;
+}
+.gov-next-inner  { display: flex; flex-direction: column; gap: 0; }
+.gov-next-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.gov-next-date   { font-size: 24px; font-weight: 600; letter-spacing: -.5px; color: var(--text); margin: 0 0 4px; }
+.gov-next-label  { font-size: 13px; color: var(--muted); margin: 0; }
+.gov-next-badge  {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  background: #eaf1eb;
+  padding: 8px 18px;
+  border-radius: 24px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gov-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.gov-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 32px 24px 22px;
+}
+
+.gov-photo {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 2.5px solid;
+  overflow: hidden;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+.gov-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.gov-photo-init {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -1px;
+}
+
+.gov-card-role     { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.gov-card-name     { font-size: 17px; font-weight: 600; letter-spacing: -.3px; line-height: 1.2; margin: 0 0 10px; }
+.gov-card-meta     { display: flex; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap; margin-bottom: 6px; }
+.gov-card-district { font-size: 12px; color: var(--muted); }
+.gov-card-term     { font-size: 11px; color: var(--muted); line-height: 1.4; margin: 0; }
+
+.gov-party-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.gov-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.gov-btn {
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gov-btn:hover { opacity: .85; text-decoration: none; }
+.gov-btn-ghost { background: transparent; color: var(--accent); border: 1px solid currentColor; }
+.gov-btn-ghost:hover { background: var(--accent); color: #fff; }
+.gov-phone-link { font-size: 12px; color: var(--muted); text-decoration: none; }
+.gov-phone-link:hover { color: var(--accent); }
+
+/* Elections timeline */
+.gov-timeline { display: flex; flex-direction: column; }
+.gov-tl-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.gov-tl-row:last-child { border-bottom: none; }
+.gov-tl-dot   { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+.gov-tl-past .gov-tl-dot { background: var(--border); }
+.gov-tl-past .gov-tl-date,
+.gov-tl-past .gov-tl-label { opacity: .38; }
+.gov-tl-content { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+.gov-tl-date  { font-size: 13px; font-weight: 600; color: var(--text); min-width: 106px; }
+.gov-tl-label { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 640px) {
+  .gov-grid        { grid-template-columns: 1fr; }
+  .gov-next-card   { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .gov-tl-date     { min-width: 90px; }
+}
+
+
+/* ─── Sky page ───────────────────────────────────────────── */
+
+.sky-astro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.sky-astro-top {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  gap: 0;
+}
+
+.sky-astro-half {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.sky-astro-half-right { justify-content: flex-end; }
+
+.sky-astro-rule {
+  width: 1px;
+  height: 38px;
+  background: var(--border);
+  margin: 0 24px;
+  flex-shrink: 0;
+}
+
+.sky-astro-icon    { font-size: 1.75rem; line-height: 1; flex-shrink: 0; }
+.sky-astro-primary { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+.sky-astro-sub     { font-size: 12px; color: var(--muted); margin: 0; }
+
+.sky-times {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.sky-time-cell {
+  flex: 1;
+  padding: 11px 16px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.sky-time-cell:last-child { border-right: none; }
+.sky-time-label { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0 0 3px; }
+.sky-time-val   { font-size: 13px; font-weight: 500; margin: 0; }
+
+/* APOD */
+.sky-apod-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  gap: 0;
+}
+.sky-apod-img-wrap { flex-shrink: 0; width: 52%; display: block; }
+.sky-apod-img      { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sky-apod-video-link { display: flex; align-items: center; justify-content: center; width: 52%; background: var(--bg); font-size: 14px; color: var(--accent); padding: 32px; text-decoration: none; }
+.sky-apod-video-link:hover { text-decoration: underline; }
+.sky-apod-body  { padding: 22px 24px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.sky-apod-title { font-size: 16px; font-weight: 600; letter-spacing: -.2px; margin: 0; line-height: 1.3; }
+.sky-apod-text  { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
+.sky-apod-credit { font-size: 11px; color: var(--muted); margin: 0; margin-top: auto; padding-top: 8px; }
+
+@media (max-width: 640px) {
+  .sky-apod-card      { flex-direction: column; }
+  .sky-apod-img-wrap  { width: 100%; max-height: 200px; }
+  .sky-apod-img       { max-height: 200px; }
+  .sky-apod-video-link { width: 100%; }
+}
+
+/* Sky panorama + planet list */
+.sky-now-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.sky-canvas-wrap {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.sky-canvas {
+  flex: 1;
+  width: 100%;
+  display: block;
+  min-height: 280px;
+}
+
+.sky-no-planets {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 20px 16px;
+}
+
+/* Planets */
+.sky-planet-list { display: flex; flex-direction: column; }
+.sky-planet-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sky-planet-row:last-child { border-bottom: none; }
+.sky-planet-dot  { font-size: 10px; width: 22px; text-align: center; flex-shrink: 0; }
+.sky-planet-body { flex: 1; display: flex; align-items: baseline; gap: 8px; }
+.sky-planet-name { font-size: 14px; font-weight: 600; }
+.sky-planet-const { font-size: 12px; color: var(--muted); }
+.sky-planet-pos  { display: flex; gap: 10px; align-items: center; }
+.sky-planet-alt  { font-size: 13px; font-weight: 500; }
+.sky-planet-dir  { font-size: 12px; color: var(--muted); min-width: 22px; }
+.sky-eye-badge   { font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: #e8f0ea; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+
+/* Flight map */
+.sky-map-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 36px;
+}
+
+.sky-map-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.sky-map-title { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+.sky-map-sub   { font-size: 12px; color: var(--muted); margin: 0; }
+
+.sky-refresh {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color .15s;
+}
+.sky-refresh:hover    { border-color: var(--accent); }
+.sky-refresh:disabled { opacity: .4; cursor: default; }
+
+.sky-map {
+  height: 420px;
+  background: #e8e8e6;
+}
+
+/* Plane icons */
+.sky-plane-icon { background: none !important; border: none !important; }
+
+/* Plane tooltip */
+.sky-lf-tip {
+  background: rgba(26,26,24,.9) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  padding: 6px 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25) !important;
+  white-space: nowrap !important;
+}
+.sky-lf-tip::before { display: none !important; }
+
+/* Ridgelea Hills label */
+.sky-rh-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(58,90,64,.7) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+.sky-rh-label::before { display: none !important; }
+
+/* Flight grid */
+.sky-flight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 8px;
+}
+.sky-flight {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.sky-flight-cs   { font-size: 13px; font-weight: 600; margin: 0 0 3px; }
+.sky-flight-meta { font-size: 11px; color: var(--muted); margin: 0; }
+
+@media (max-width: 640px) {
+  .sky-astro-top  { padding: 16px 18px; }
+  .sky-astro-rule { margin: 0 16px; }
+  .sky-time-val   { font-size: 12px; }
+  .sky-map        { height: 300px; }
+  .sky-planet-body { flex-direction: column; gap: 1px; }
+  .sky-flight-grid { grid-template-columns: 1fr 1fr; }
+  .sky-now-layout  { grid-template-columns: 1fr; }
+  .sky-canvas-wrap { border-right: none; border-bottom: 1px solid var(--border); }
+  .sky-canvas      { min-height: 220px; }
+}
+@media (max-width: 380px) {
+  .sky-astro-top  { flex-direction: column; gap: 14px; }
+  .sky-astro-half-right { justify-content: flex-start; }
+  .sky-astro-rule { display: none; }
 }
 
 /* ─── County alerts (news sidebar) ─────────────────────── */

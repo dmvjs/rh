@@ -111,7 +111,6 @@ function hoaMeetingNotice() {
 
 function renderNeighborhood(local, police) {
   const hoa = hoaMeetingNotice()
-  if (!local.length && !police.length && !hoa) return ''
 
   const hoaHtml = hoa ? `
     <p class="nbhd-section-label">HOA Board Meeting</p>
@@ -120,15 +119,15 @@ function renderNeighborhood(local, police) {
     </div>
   ` : ''
 
-  const policeHtml = police.length ? `
+  const policeHtml = `
     <p class="nbhd-section-label">Fairfax County Police</p>
-    ${police.map(p => `
+    ${police.length ? police.map(p => `
       <div class="nbhd-incident">
         <p class="nbhd-incident-type">${esc(fmtIncidentType(p.type))}</p>
         <p class="nbhd-incident-meta">${esc(fmtAddress(p.address))} · ${esc(fmtIncidentDate(p.date, p.time))}</p>
       </div>
-    `).join('')}
-  ` : ''
+    `).join('') : `<p class="nbhd-incident-meta" style="padding:2px 0 4px;">No recent incidents on neighborhood streets.</p>`}
+  `
 
   const localHtml = local.map(a => `
     <a href="${esc(a.url)}" target="_blank" rel="noopener" class="nbhd-article">

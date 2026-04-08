@@ -17,6 +17,7 @@ import waterRoutes        from './routes/water.js'
 import parksRoutes        from './routes/parks.js'
 import wildlifeRoutes     from './routes/wildlife.js'
 import gasRoutes          from './routes/gas.js'
+import skyRoutes          from './routes/sky.js'
 
 
 const app = new Hono()
@@ -43,6 +44,7 @@ app.route('/api/water',       waterRoutes)
 app.route('/api/parks',       parksRoutes)
 app.route('/api/wildlife',    wildlifeRoutes)
 app.route('/api/gas',         gasRoutes)
+app.route('/api/sky',         skyRoutes)
 
 
 app.get('/api/health', (c) => c.json({ ok: true }))

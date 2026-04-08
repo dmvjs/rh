@@ -42,24 +42,33 @@ export async function renderHeader(el) {
           <a href="/" class="site-name">ridgelea hills</a>
           <button class="nav-toggle" id="nav-toggle" aria-label="Menu">&#9776;</button>
           <nav id="main-nav">
-            <a href="/">news</a>
-            <a href="/weather/">weather</a>
-            <a href="/transit/">transit</a>
-            <a href="/restaurants/">dining</a>
-            <a href="/government/">govt</a>
-            <a href="/cameras/">cams</a>
-            <a href="/gas/">gas</a>
-            <a href="/property/">homes</a>
-            <a href="/water/">water</a>
-            <a href="/parks/">parks</a>
-            <a href="/wildlife/">wildlife</a>
-            <a href="/about/">about</a>
-
-
+            <div class="nav-dropdown" id="nav-local">
+              <button class="nav-dropdown-trigger">local ▾</button>
+              <div class="nav-dropdown-menu nav-dropdown-menu-left">
+                <a href="/">news</a>
+                <a href="/weather/">weather</a>
+                <a href="/transit/">transit</a>
+                <a href="/restaurants/">dining</a>
+                <a href="/gas/">gas</a>
+                <a href="/sky/">sky</a>
+                <a href="/cameras/">cams</a>
+              </div>
+            </div>
+            <div class="nav-dropdown" id="nav-neighborhood">
+              <button class="nav-dropdown-trigger">neighborhood ▾</button>
+              <div class="nav-dropdown-menu nav-dropdown-menu-left">
+                <a href="/property/">property</a>
+                <a href="/water/">water</a>
+                <a href="/parks/">parks</a>
+                <a href="/wildlife/">wildlife</a>
+                <a href="/government/">govt</a>
+                <a href="/about/">about</a>
+              </div>
+            </div>
             ${user
               ? `<div class="nav-dropdown" id="nav-community">
                    <button class="nav-dropdown-trigger">community ▾</button>
-                   <div class="nav-dropdown-menu">
+                   <div class="nav-dropdown-menu nav-dropdown-menu-left">
                      <a href="/community/">posts</a>
                      <a href="/post/">+ post</a>
                      <a href="/account/">my posts</a>
@@ -87,12 +96,16 @@ export async function renderHeader(el) {
     el.querySelector('#main-nav').classList.toggle('nav-open')
   })
 
-  const dropdown = el.querySelector('#nav-community')
-  dropdown?.querySelector('.nav-dropdown-trigger')?.addEventListener('click', (e) => {
-    e.stopPropagation()
-    dropdown.classList.toggle('open')
+  const dropdowns = el.querySelectorAll('.nav-dropdown')
+  dropdowns.forEach(dd => {
+    dd.querySelector('.nav-dropdown-trigger')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const isOpen = dd.classList.contains('open')
+      dropdowns.forEach(d => d.classList.remove('open'))
+      if (!isOpen) dd.classList.add('open')
+    })
   })
-  document.addEventListener('click', () => dropdown?.classList.remove('open'), { once: false })
+  document.addEventListener('click', () => dropdowns.forEach(d => d.classList.remove('open')))
 
   return user
 }

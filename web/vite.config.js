@@ -28,6 +28,7 @@ export default defineConfig({
         parks:        resolve(import.meta.dirname, 'parks/index.html'),
         wildlife:     resolve(import.meta.dirname, 'wildlife/index.html'),
         gas:          resolve(import.meta.dirname, 'gas/index.html'),
+        sky:          resolve(import.meta.dirname, 'sky/index.html'),
         about:        resolve(import.meta.dirname, 'about/index.html'),
         verify:       resolve(import.meta.dirname, 'verify/index.html'),
         forgot:       resolve(import.meta.dirname, 'forgot/index.html'),

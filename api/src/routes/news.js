@@ -32,8 +32,8 @@ const LOCAL_FEEDS = [
 // Distinctive names used to filter RSS articles (must be specific enough to avoid false positives)
 const LOCAL_RE = /ridgelea|mantua|moss brooke|millbank|sandalwood|laro|bentwood|glade hill|sandy ridge|southlea/i
 
-// Ridgelea Hills streets only — used to filter police incidents to the subdivision
-const POLICE_RE = /ridgelea|southlea|sandy ridge|sandalwood|laro|bentwood/i
+// Ridgelea Hills streets only — derived from addresses.js enumeration
+const POLICE_RE = /ridgelea|southlea|sandy ridge|sandalwood|laro|bentwood|glade hill|millbank|moss brooke|autumn leaf/i
 
 function isLocalAddress(addressRaw) {
   return POLICE_RE.test(addressRaw)
@@ -220,7 +220,7 @@ function parsePoliceRow(line) {
 }
 
 async function fetchPolice(kv) {
-  const CACHE_KEY = 'police:v2'
+  const CACHE_KEY = 'police:v3'
   const TTL = 60 * 60 // 1 hour
 
   if (kv) {
