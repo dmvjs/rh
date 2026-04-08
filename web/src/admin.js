@@ -109,41 +109,6 @@ async function load(viewerRole, viewerId) {
 
 }
 
-async function loadTrusted() {
-  const { trusted } = await api.get('/api/admin/trusted-emails')
-  const el = document.getElementById('trusted-list')
-
-  const uniqueAddresses = new Set(trusted.map(t => t.address).filter(Boolean)).size
-  document.getElementById('trusted-title').textContent =
-    `Trusted emails (auto-approve) · ${trusted.length} emails · ${uniqueAddresses} addresses`
-
-  if (!trusted.length) {
-    el.innerHTML = '<p style="color:var(--muted)">None yet.</p>'
-    return
-  }
-
-  el.innerHTML = `
-    <table class="admin-table">
-      <thead><tr><th>Address</th><th>ID</th><th></th></tr></thead>
-      <tbody>
-        ${trusted.map(t => `
-          <tr data-id="${t.id}">
-            <td style="white-space:nowrap;font-size:.85rem;">${escHtml(t.address ?? '—')}</td>
-            <td style="font-family:monospace;font-size:.8rem;color:var(--muted);">${escHtml(t.hash_prefix)}</td>
-            <td><button class="btn btn-sm btn-danger trusted-delete-btn">Remove</button></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `
-
-  el.querySelectorAll('.trusted-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await api.delete(`/api/admin/trusted-emails/${btn.closest('tr').dataset.id}`)
-      loadTrusted()
-    })
-  })
-}
 
 async function loadAds() {
   const { ads } = await api.get('/api/ads/admin')
@@ -208,7 +173,6 @@ async function init() {
   document.querySelector('main').style.visibility = ''
   await load(user.role, user.id)
   await loadAds()
-  await loadTrusted()
 
   document.getElementById('ad-form').addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -227,22 +191,7 @@ async function init() {
     btn.disabled = false
   })
 
-  document.getElementById('trusted-form').addEventListener('submit', async (e) => {
-    e.preventDefault()
-    const btn = e.target.querySelector('button')
-    btn.disabled = true
-    try {
-      await api.post('/api/admin/trusted-emails', {
-        email:   document.getElementById('trusted-email').value.trim(),
-        address: document.getElementById('trusted-address').value.trim() || null,
-      })
-      e.target.reset()
-      await loadTrusted()
-    } catch (err) {
-      alert(err.message)
-    }
-    btn.disabled = false
-  })
+
 }
 
 init()

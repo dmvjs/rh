@@ -16,15 +16,11 @@ async function init() {
   }
 
   try {
-    const { approved } = await api.get(`/api/auth/verify?token=${encodeURIComponent(token)}`)
+    await api.get(`/api/auth/verify?token=${encodeURIComponent(token)}`)
 
-    el.innerHTML = approved ? `
+    el.innerHTML = `
       <h1 class="auth-title">Email confirmed</h1>
-      <p style="color:var(--muted);margin-bottom:24px;line-height:1.6;">You're all set — sign in to get started.</p>
-      <a href="/login/" class="btn">Sign in</a>
-    ` : `
-      <h1 class="auth-title">Email confirmed</h1>
-      <p style="color:var(--muted);margin-bottom:24px;line-height:1.6;">Your email is verified. A neighbor will review your registration and you'll be able to sign in once approved.</p>
+      <p style="color:var(--muted);margin-bottom:24px;line-height:1.6;">Your email is verified. Your registration will be reviewed and you'll be able to sign in once approved.</p>
       <a href="/" class="btn">Back to home</a>
     `
   } catch (err) {

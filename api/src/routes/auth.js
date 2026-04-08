@@ -24,15 +24,11 @@ router.post('/register', async (c) => {
     note:    note?.trim() || null,
   }
 
-  const trusted  = await c.env.DB.prepare('SELECT id FROM trusted_emails WHERE email_hash = ?')
-    .bind(emailHash).first()
-  const approved = trusted ? 1 : 0
-
   let userId
   try {
     const { meta } = await c.env.DB.prepare(
-      'INSERT INTO users (name, email_hash, password_hash, address, note, approved) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(user.name, emailHash, hash, user.address, user.note, approved).run()
+      'INSERT INTO users (name, email_hash, password_hash, address, note, approved) VALUES (?, ?, ?, ?, ?, 0)'
+    ).bind(user.name, emailHash, hash, user.address, user.note).run()
     userId = meta.last_row_id
   } catch (err) {
     if (err.message?.includes('UNIQUE')) return c.json({ error: 'Email already registered' }, 409)
@@ -46,11 +42,7 @@ router.post('/register', async (c) => {
 
   c.executionCtx.waitUntil(sendVerificationEmail(user.email, token, c.env))
 
-  return c.json({
-    message: trusted
-      ? 'Check your email to confirm your address, then you\'re all set.'
-      : 'Check your email to confirm your address, then your registration will be reviewed.',
-  })
+  return c.json({ message: 'Check your email to confirm your address, then your registration will be reviewed.' })
 })
 
 router.get('/verify', async (c) => {

@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { requireModerator, requireAdmin } from '../middleware/auth.js'
-import { hashEmail } from '../crypto.js'
 
 const router = new Hono()
 
@@ -68,34 +67,6 @@ router.delete('/users/:id', requireAdmin, async (c) => {
 
 router.delete('/listings/:id', requireModerator, async (c) => {
   const { meta } = await c.env.DB.prepare('UPDATE listings SET active = 0 WHERE id = ?')
-    .bind(Number(c.req.param('id'))).run()
-  if (!meta.changes) return c.json({ error: 'Not found' }, 404)
-  return c.json({ ok: true })
-})
-
-router.get('/trusted-emails', requireAdmin, async (c) => {
-  const { results } = await c.env.DB.prepare(
-    'SELECT id, address, substr(email_hash, 1, 8) as hash_prefix FROM trusted_emails ORDER BY address ASC'
-  ).all()
-  return c.json({ trusted: results })
-})
-
-router.post('/trusted-emails', requireAdmin, async (c) => {
-  const { email, address } = await c.req.json().catch(() => ({}))
-  if (!email || !address) return c.json({ error: 'email and address are required' }, 400)
-  const email_hash = await hashEmail(email)
-  try {
-    await c.env.DB.prepare('INSERT INTO trusted_emails (email_hash, address) VALUES (?, ?)')
-      .bind(email_hash, address.trim()).run()
-  } catch (err) {
-    if (err.message?.includes('UNIQUE')) return c.json({ error: 'Email already in list' }, 409)
-    throw err
-  }
-  return c.json({ ok: true })
-})
-
-router.delete('/trusted-emails/:id', requireAdmin, async (c) => {
-  const { meta } = await c.env.DB.prepare('DELETE FROM trusted_emails WHERE id = ?')
     .bind(Number(c.req.param('id'))).run()
   if (!meta.changes) return c.json({ error: 'Not found' }, 404)
   return c.json({ ok: true })
