@@ -47,6 +47,227 @@ function rand(seed) {
   return Math.abs(Math.sin(seed * 127.1 + 311.7) * 43758.5453) % 1
 }
 
+// Observer coordinates (Ridglea Hills, VA)
+const OBS_LAT = 38.84142
+const OBS_LON = -77.25081
+
+// Bright star catalog: [name, RA°, Dec°, apparent magnitude]
+// RA° = RA_hours × 15. Sources: Yale BSC / Hipparcos.
+const STARS = [
+  // mag < 1
+  ['Sirius',      101.29, -16.72, -1.46],
+  ['Canopus',      95.99, -52.70, -0.74],
+  ['Arcturus',    213.92,  19.18, -0.05],
+  ['Vega',        279.23,  38.78,  0.03],
+  ['Capella',      79.17,  46.00,  0.08],
+  ['Rigel',        78.63,  -8.20,  0.13],
+  ['Procyon',     114.83,   5.23,  0.34],
+  ['Betelgeuse',   88.79,   7.41,  0.45],
+  ['Altair',      297.70,   8.87,  0.77],
+  ['Aldebaran',    68.98,  16.51,  0.87],
+  ['Antares',     247.35, -26.43,  0.96],
+  ['Spica',       201.30, -11.16,  0.97],
+  // mag 1–2
+  ['Pollux',      116.33,  28.03,  1.14],
+  ['Fomalhaut',   344.41, -29.62,  1.16],
+  ['Deneb',       310.36,  45.28,  1.25],
+  ['Regulus',     152.09,  11.97,  1.35],
+  ['Adhara',      104.66, -28.97,  1.50],
+  ['Castor',      113.65,  31.89,  1.58],
+  ['Shaula',      263.40, -37.10,  1.63],
+  ['Bellatrix',    81.28,   6.35,  1.64],
+  ['Alnath',       81.57,  28.61,  1.65],
+  ['Alnilam',      84.05,  -1.20,  1.70],
+  ['Alnitak',      85.19,  -1.94,  1.74],
+  ['Regor',       122.38, -47.34,  1.78],
+  ['Alioth',      193.51,  55.96,  1.77],
+  ['Mirfak',       51.08,  49.86,  1.79],
+  ['Dubhe',       165.93,  61.75,  1.79],
+  ['Wezen',       107.10, -26.39,  1.83],
+  ['Sargas',      264.33, -42.99,  1.87],
+  ['Kaus Aust.',  276.04, -34.38,  1.85],
+  ['Alkaid',      206.89,  49.31,  1.86],
+  ['Menkalinan',   89.88,  44.95,  1.90],
+  ['Alhena',       99.43,  16.40,  1.93],
+  ['Mirzam',       95.68, -17.96,  1.98],
+  ['Polaris',      37.95,  89.26,  1.98],
+  ['Alphard',     141.90,  -8.66,  1.99],
+  ['Hamal',        31.79,  23.46,  2.00],
+  ['Mirach',       17.43,  35.62,  2.05],
+  ['Almach',       30.00,  42.33,  2.10],
+  ['Algieba',     154.00,  19.84,  2.08],
+  ['Menkent',     211.67, -36.37,  2.06],
+  ['Saiph',        86.94,  -9.67,  2.07],
+  ['Alpheratz',     2.10,  29.09,  2.07],
+  ['Kochab',      222.68,  74.16,  2.08],
+  ['Rasalhague',  263.73,  12.56,  2.08],
+  ['Algol',        47.04,  40.96,  2.12],
+  ['Alphecca',    233.67,  26.71,  2.23],
+  ['Diphda',       10.90, -17.99,  2.02],
+  ['Nunki',       283.82, -26.30,  2.05],
+  ['Denebola',    177.27,  14.57,  2.14],
+  ['Aludra',      111.02, -29.30,  2.45],
+  ['Ankaa',         6.57, -42.31,  2.40],
+  ['Menkar',       45.57,   4.09,  2.54],
+  ['Sadr',        305.56,  40.26,  2.20],
+  ['Mintaka',      83.00,  -0.30,  2.23],
+  ['Mizar',       200.98,  54.93,  2.23],
+  ['Etamin',      268.38,  51.49,  2.24],
+  ['Schedar',      10.13,  56.54,  2.24],
+  ['Navi',         14.18,  60.72,  2.47],
+  ['Ruchbah',      21.45,  60.24,  2.68],
+  ['Caph',          2.29,  59.15,  2.28],
+  ['Dschubba',    240.08, -22.62,  2.32],
+  ['Wei',         252.54, -34.29,  2.29],
+  ['Girtab',      265.62, -39.03,  2.39],
+  ['Sabik',       257.59, -15.72,  2.43],
+  ['Naos',        120.90, -40.00,  2.25],
+  ['Enif',        326.05,   9.88,  2.38],
+  ['Scheat',      345.94,  28.08,  2.42],
+  ['Zubeneschamali',229.25, -9.38, 2.61],
+  ['Alderamin',   319.65,  62.59,  2.45],
+  ['Epsilon Per',  59.46,  40.01,  2.89],
+  ['Markab',      346.19,  15.21,  2.49],
+  ['Zosma',       168.53,  20.52,  2.56],
+  ['Izar',        221.25,  27.07,  2.37],
+  ['Merak',       165.46,  56.38,  2.37],
+  ['Arneb',        83.18, -17.82,  2.58],
+  ['Zubenelgenubi',222.72,-16.04,  2.75],
+  ['Gienah',      183.79, -17.54,  2.59],
+  ['Han',         254.42, -10.57,  2.56],
+  ['Acrab',       241.36, -19.81,  2.62],
+  ['Phact',        85.08, -34.07,  2.65],
+  ['Sheratan',     28.66,  20.81,  2.64],
+  ['Yed Prior',   243.59,  -3.70,  2.74],
+  ['Unukalhai',   235.51,   6.43,  2.65],
+  ['Porrima',     190.41,  -1.45,  2.74],
+  ['Kornephoros', 247.56,  21.49,  2.77],
+  ['Kraz',        187.47, -23.40,  2.65],
+  ['Nihal',        85.51, -20.76,  2.84],
+  ['Cursa',        76.38,  -5.09,  2.79],
+  ['Rastaban',    262.61,  52.30,  2.79],
+  ['Zeta Her',    249.68,  31.60,  2.81],
+  ['Phecda',      178.46,  53.69,  2.44],
+  ['Muphrid',     218.02,  18.40,  2.68],
+  ['Kaus Media',  275.25, -29.83,  2.70],
+  ['Fawaris',     306.96,  45.13,  2.87],
+  ['Algenib',       3.31,  15.18,  2.83],
+  ['Matar',       332.32,  30.22,  2.94],
+  ['Rho Pup',     121.89, -24.30,  2.81],
+  ['Vindemiatrix',195.54,  10.96,  2.83],
+  ['Alcyone',      56.87,  24.10,  2.87],
+  ['Tarazed',     296.57,  10.61,  2.72],
+  ['Kaus Borealis',276.05,-25.42,  2.81],
+  ['Lesath',      264.33, -37.30,  2.69],
+  ['Albireo',     292.68,  27.96,  3.08],
+  ['Ascella',     283.82, -29.88,  2.60],
+  ['Gomeisa',     114.10,   8.29,  2.90],
+  ['Furud',        95.08, -30.06,  3.02],
+  ['Albaldah',    290.42, -21.02,  2.89],
+  ['Pi Sco',      239.71, -26.11,  2.89],
+  ['Alniyat',     245.81, -25.59,  2.89],
+  ['Tau Sco',     248.97, -28.22,  2.82],
+  ['Sadalsuud',   322.89,  -5.57,  2.91],
+  ['Sadalmelik',  331.45,  -0.32,  2.95],
+  ['Cebalrai',    265.87,   4.57,  2.77],
+  ['Gienah Cyg',  305.56,  33.97,  2.48],
+  ['Algorab',     188.37, -16.52,  2.94],
+  ['Delta Per',    55.73,  47.79,  3.01],
+  ['Zaurak',       59.51, -13.51,  2.97],
+  ['Tejat',        95.74,  22.51,  2.88],
+  ['Deneb Algedi', 325.02,-16.13,  2.85],
+  ['Dabih',       305.25, -14.78,  3.08],
+  ['Ras Elased',  146.46,  23.77,  2.98],
+  ['Homam',       326.17,  10.83,  3.40],
+  ['Gamma Hya',   199.73, -23.17,  3.00],
+  ['Beta Tri',     31.79,  34.99,  3.00],
+  ['Zeta Tau',     84.41,  21.14,  3.00],
+  ['Pi Pup',      110.03, -37.10,  2.70],
+  ['Wazn',         92.37, -35.77,  3.12],
+  ['Gamma Lup',   224.63, -41.17,  2.78],
+  ['Alpha Lup',   220.48, -47.39,  2.30],
+  ['Beta Lup',    224.00, -43.13,  2.68],
+  ['Theta UMa',   163.77,  51.68,  3.17],
+  ['Acamar',       44.57, -40.30,  3.24],
+  ['Theta Oph',   260.10, -24.99,  3.27],
+  ['Delta And',    22.72,  30.86,  3.27],
+  ['Skat',        340.03, -15.82,  3.27],
+  ['Mu Sco',      253.26, -38.05,  3.08],
+  ['Sulafat',     284.74,  32.69,  3.26],
+  ['Megrez',      183.86,  57.03,  3.31],
+  ['Propus',       93.72,  22.51,  3.31],
+  ['Seginus',     219.47,  38.31,  3.03],
+  ['Altais',      287.30,  64.56,  3.07],
+  ['Eta Ser',     278.81,  -2.90,  3.26],
+  ['Zeta Aql',    299.80,  13.86,  2.99],
+  ['Theta Aql',   306.21,  -1.00,  3.23],
+  ['Nu Hya',      211.59, -16.20,  3.11],
+  ['Alfirk',      322.17,  70.56,  3.23],
+  ['Errai',       354.84,  77.63,  3.21],
+  ['Edasich',     231.23,  58.97,  3.29],
+  ['Tau Sgr',     285.65, -27.67,  3.32],
+  ['Auva',        197.63,   3.40,  3.38],
+  ['Heze',        202.59,  -0.60,  3.38],
+  ['Zeta Cyg',    318.23,  30.23,  3.20],
+  ['Tania Aust.', 154.27,  41.50,  3.05],
+  ['Minkar',      183.95, -22.62,  3.02],
+  ['Segin',        28.60,  63.67,  3.38],
+  ['Meissa',       83.79,   9.93,  3.39],
+  ['Chertan',     171.53,  15.43,  3.34],
+  ['Adhafera',    154.17,  23.42,  3.44],
+  ['Al Tarf',     124.13,   9.19,  3.52],
+  ['Hassaleh',     74.25,  33.17,  2.69],
+  ['Mahasim',      89.93,  37.21,  2.65],
+  ['Tania Bor.',  150.66,  42.91,  3.45],
+  ['Sheliak',     282.52,  33.36,  3.45],
+  ['Nekkar',      225.49,  40.39,  3.49],
+  ['Mebsuda',     100.00,  25.13,  3.06],
+  ['Zeta Per',     60.17,  31.89,  2.85],
+  ['Wasat',       106.03,  22.00,  3.53],
+  ['Alzirr',      101.32,  12.90,  3.36],
+  ['Talitha',     134.80,  48.04,  3.14],
+  ['Sarin',       258.00,  24.84,  3.14],
+  ['Pi Her',      264.87,  36.81,  3.16],
+  ['Phi Sgr',     280.47, -26.99,  3.17],
+  ['Sigma Lib',   226.02, -25.28,  3.25],
+  ['Thuban',      211.10,  64.38,  3.65],
+  ['Mebuda',      100.50,  20.57,  3.79],
+  ['Rotanev',     308.17,  14.60,  3.63],
+  ['Alshain',     298.83,   6.41,  3.71],
+  ['Kappa Gem',   116.59,  24.40,  3.57],
+  ['Gamma Sge',   298.36,  19.49,  3.47],
+  ['Eta Psc',      22.87,  15.34,  3.62],
+  ['Lambda Aql',  284.91,  -4.88,  3.44],
+  ['Delta Aql',   296.47,   3.11,  3.36],
+  ['Mu Peg',      341.02,  24.60,  3.48],
+  ['Theta Peg',   331.02,   6.19,  3.53],
+  ['Alpha Tri',    29.09,  29.58,  3.41],
+  ['Nu Oph',      271.45,  -9.77,  3.34],
+  ['Eta Cet',      18.37, -10.18,  3.45],
+  ['Tau Cet',      26.02, -15.94,  3.50],
+  ['Gamma Cet',    41.24,   3.24,  3.47],
+  ['Eta Leo',     155.88,  16.76,  3.49],
+  ['Xi Sgr',      279.28, -21.11,  3.51],
+  ['Beta CrB',    231.23,  29.10,  3.68],
+  ['Alrescha',     30.51,   2.76,  3.82],
+]
+
+// Convert RA/Dec to Alt/Az using precomputed Local Sidereal Time (degrees)
+function starAltAz(raDeg, decDeg, lst) {
+  const HA    = ((lst - raDeg) % 360 + 360) % 360
+  const phi   = OBS_LAT * Math.PI / 180
+  const delta = decDeg  * Math.PI / 180
+  const h     = HA      * Math.PI / 180
+  const sinAlt = Math.sin(phi) * Math.sin(delta) + Math.cos(phi) * Math.cos(delta) * Math.cos(h)
+  const alt    = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180 / Math.PI
+  const cosAlt = Math.cos(alt * Math.PI / 180)
+  if (Math.abs(cosAlt) < 1e-6) return { alt, az: 0 }
+  const sinAz = -Math.cos(delta) * Math.sin(h) / cosAlt
+  const cosAz = (Math.sin(delta) - Math.sin(phi) * sinAlt) / (Math.cos(phi) * cosAlt)
+  const az    = (Math.atan2(sinAz, cosAz) * 180 / Math.PI + 360) % 360
+  return { alt, az }
+}
+
 // Draw the correct lunar phase shape using canvas geometry
 function drawMoonPhase(ctx, x, y, R, curphase, fracillum) {
   const frac = parseFloat(String(fracillum ?? '100').replace('%', '')) / 100
@@ -215,6 +436,12 @@ function drawSky(canvas, planets, astro, fetchedAt) {
     const elapsedHrs = (Date.now() - fetchMs) / 3600000
     const liveAz  = sun ? sun.azimuth + elapsedHrs * 15 : null
 
+    // Local Sidereal Time (degrees) for real star positions
+    const nowMs = Date.now()
+    const JD    = nowMs / 86400000 + 2440587.5
+    const GMST  = ((280.46061837 + 360.98564736629 * (JD - 2451545.0)) % 360 + 360) % 360
+    const LST   = ((GMST + OBS_LON) % 360 + 360) % 360
+
     // ── Sky gradient — smooth continuous interpolation ─────────
     // Anchor states: [altitude, [zenithR,G,B], [horizonR,G,B]]
     const SKY = [
@@ -248,20 +475,32 @@ function drawSky(canvas, planets, astro, fetchedAt) {
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, W, H - MARG)
 
-    // ── Stars — twinkling ──────────────────────────────────────
+    // ── Stars — real positions from catalog ────────────────────
+    // Named labels only for the 8 most recognizable stars
+    const NAMED = new Set(['Sirius','Betelgeuse','Rigel','Vega','Altair','Deneb','Arcturus','Polaris'])
     if (liveAlt < 6) {
       const fadeIn = Math.min(1, Math.max(0, (-liveAlt + 6) / 12))
-      for (let i = 0; i < 140; i++) {
-        const sx    = rand(i * 3.7) * W
-        const sy    = rand(i * 7.1) * (H - MARG - 10)
-        const sr    = rand(i * 11.3) > 0.88 ? 1.3 : 0.55
-        const freq  = 0.7 + rand(i * 23.1) * 1.4
-        const phase = rand(i * 41.7) * Math.PI * 2
+      ctx.font = '8px -apple-system,sans-serif'
+      STARS.forEach(([name, raDeg, decDeg, mag], i) => {
+        const { alt, az } = starAltAz(raDeg, decDeg, LST)
+        const { x, y, vis } = toXY(alt, az)
+        if (!vis) return
+        const sr      = Math.max(0.5, 2.2 - mag * 0.55)
+        const freq    = 0.7 + rand(i * 23.1) * 1.4
+        const phase   = rand(i * 41.7) * Math.PI * 2
         const twinkle = 0.65 + 0.35 * Math.sin(t * 0.001 * freq + phase)
-        const sa = (rand(i * 17.9) * 0.5 + 0.3) * fadeIn * twinkle
-        ctx.fillStyle = `rgba(255,255,255,${sa.toFixed(2)})`
-        ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill()
-      }
+        const base    = mag < 0 ? 1.0 : mag < 1 ? 0.92 : mag < 2 ? 0.78 : 0.60
+        const sa      = (base * fadeIn * twinkle).toFixed(2)
+        const col     = mag < 0.5 ? `rgba(255,238,210,${sa})` : `rgba(255,255,255,${sa})`
+        ctx.fillStyle = col
+        ctx.beginPath(); ctx.arc(x, y, sr, 0, Math.PI * 2); ctx.fill()
+        if (NAMED.has(name) && fadeIn > 0.4) {
+          ctx.fillStyle = `rgba(200,200,200,${(fadeIn * 0.55).toFixed(2)})`
+          ctx.textAlign = x > W * 0.8 ? 'right' : 'left'
+          ctx.fillText(name, x > W * 0.8 ? x - sr - 3 : x + sr + 3, y + 1)
+        }
+      })
+      ctx.textAlign = 'center'
     }
 
     // ── Shooting stars (night only) ────────────────────────────
