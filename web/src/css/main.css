@@ -1013,6 +1013,30 @@ footer a { color: var(--muted); text-decoration: underline; }
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+.sky-compass-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.45);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.sky-compass-btn:hover        { color: #fff; border-color: rgba(255,255,255,.5); }
+.sky-compass-btn.sky-compass-on {
+  color: #7dd3fc;
+  border-color: #7dd3fc;
+  background: rgba(125,211,252,.12);
 }
 
 .sky-canvas {

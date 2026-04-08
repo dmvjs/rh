@@ -338,7 +338,8 @@ function drawMoonPhase(ctx, x, y, R, curphase, fracillum) {
   ctx.restore()
 }
 
-let skyAnimFrame = null
+let skyAnimFrame  = null
+let compassHeading = null  // null = fixed E→W view; number = live compass azimuth
 
 // Estimate current sun altitude from rise/set times so the gradient drifts live
 function estimateSunAlt(astro) {
@@ -388,20 +389,19 @@ function drawSky(canvas, planets, astro, fetchedAt) {
   const fracillum = astro?.fracillum ?? null
   const fetchMs   = fetchedAt ?? Date.now()
 
-  const AZ0  = 90
-  const AZ1  = 270
   const MARG = 26
 
-  function azToX(az) {
-    let a = az; if (a < AZ0) a += 360
-    return ((a - AZ0) / (AZ1 - AZ0)) * W
+  function azDiff(az) {
+    let d = az - (compassHeading ?? 180)
+    while (d >  180) d -= 360
+    while (d < -180) d += 360
+    return d
   }
 
   function toXY(alt, az) {
-    const x = azToX(az)
-    let a = az; if (a < AZ0) a += 360
+    const d = azDiff(az)
     const y = (H - MARG) - (Math.max(0, alt) / 90) * (H - MARG - 8)
-    return { x, y, vis: a >= AZ0 && a <= AZ1 && alt > -5 }
+    return { x: (d / 180 + 0.5) * W, y, vis: Math.abs(d) <= 90 && alt > -5 }
   }
 
   // Pre-render black tree silhouettes once — composited each frame
@@ -580,8 +580,9 @@ function drawSky(canvas, planets, astro, fetchedAt) {
     ctx.fillStyle = '#6b6b65'
     ctx.font = '10px -apple-system,BlinkMacSystemFont,sans-serif'
     ctx.textBaseline = 'middle'; ctx.textAlign = 'center'
-    ;[{l:'E',az:90},{l:'SE',az:135},{l:'S',az:180},{l:'SW',az:225},{l:'W',az:270}].forEach(d => {
-      ctx.fillText(d.l, ((d.az - AZ0) / (AZ1 - AZ0)) * W, H - MARG / 2)
+    ;[{l:'N',az:0},{l:'NE',az:45},{l:'E',az:90},{l:'SE',az:135},{l:'S',az:180},{l:'SW',az:225},{l:'W',az:270},{l:'NW',az:315}].forEach(d => {
+      const dx = azDiff(d.az)
+      if (Math.abs(dx) < 90) ctx.fillText(d.l, (dx / 180 + 0.5) * W, H - MARG / 2)
     })
 
     ctx.restore()
@@ -701,6 +702,13 @@ function renderPlanets(planets) {
       <div class="sky-now-layout">
         <div class="sky-canvas-wrap">
           <canvas id="sky-canvas" class="sky-canvas"></canvas>
+          <button id="sky-compass-btn" class="sky-compass-btn" title="Align with compass" hidden>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/>
+              <polygon points="8,2 9.4,8 8,6.5 6.6,8" fill="currentColor"/>
+              <polygon points="8,14 6.6,8 8,9.5 9.4,8" fill="currentColor" opacity=".4"/>
+            </svg>
+          </button>
         </div>
         <div class="sky-planet-list">${rows}</div>
       </div>
@@ -902,6 +910,38 @@ async function refreshFlights(bbox) {
   if (btn) { btn.textContent = '↻ Refresh'; btn.disabled = false }
 }
 
+function initCompass() {
+  if (!('DeviceOrientationEvent' in window) || !navigator.maxTouchPoints) return
+  const btn = document.getElementById('sky-compass-btn')
+  if (!btn) return
+  btn.hidden = false
+
+  function handleOrientation(e) {
+    // iOS: webkitCompassHeading is clockwise-from-North directly
+    // Android absolute: alpha is CCW-from-North, so negate
+    const h = e.webkitCompassHeading ?? (e.absolute ? (360 - e.alpha) % 360 : null)
+    if (h != null) compassHeading = h
+  }
+
+  btn.addEventListener('click', async () => {
+    if (btn.classList.contains('sky-compass-on')) {
+      compassHeading = null
+      btn.classList.remove('sky-compass-on')
+      window.removeEventListener('deviceorientationabsolute', handleOrientation, true)
+      window.removeEventListener('deviceorientation', handleOrientation, true)
+      return
+    }
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        if (await DeviceOrientationEvent.requestPermission() !== 'granted') return
+      } catch { return }
+    }
+    btn.classList.add('sky-compass-on')
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true)
+    window.addEventListener('deviceorientation', handleOrientation, true)
+  })
+}
+
 async function init() {
   await Promise.all([
     renderHeader(document.getElementById('site-header')),
@@ -945,6 +985,7 @@ async function init() {
 
   initLeaflet(flights)
   drawSky(document.getElementById('sky-canvas'), planets, astro, lastFetch)
+  initCompass()
   setInterval(tickAge, 5000)
   tickAge()
   setInterval(refreshFlights, 60000)
